@@ -20,7 +20,7 @@ Then open a Session, select **Memory spaces**, create a space, explicitly save s
 
 ## Behavior
 
-The Host plugin requires `ctx.agents`, `ctx.commands`, and `ctx.llm`. It opens a schema-versioned SQLite database, maintains an FTS5 trigram index of active memory versions, registers human `/memory` operations plus browser-private governance and snapshot transports, and contributes conditional context at `agent/pre-step`. The client uses the stock DSH Session-header and composer slots. Its own dialogs provide cross-workspace Session selection, per-message selection, selected-content saving, and a pre-send injection preview without modifying the DSH source tree.
+The Host plugin requires `ctx.agents`, `ctx.commands`, and `ctx.llm`. It opens a schema-versioned SQLite database, maintains an FTS5 trigram index of active memory versions, registers human `/memory` operations plus browser-private governance and snapshot transports, and contributes conditional context at `agent/pre-step`. The client uses published DSH Session-header and composer slots. DSH builds that declare the additive Workspace-row slots also show Session checkboxes and a batch tray for creating a new space; the header dialog remains the fallback. Plugin-owned dialogs provide cross-workspace Session selection, per-message selection, selected-content saving, and a pre-send injection preview without modifying the DSH source tree.
 
 Every memory version records its space, lifecycle status, version chain, source Session id and title, source event range, creation time, manual or model-extracted method, retained source-message excerpts, and recent answers that received it. Creating a new version marks the former active version in that chain `superseded`. Recall and injection use only `active` versions; all other states remain visible for audit.
 
@@ -50,7 +50,7 @@ The owner can add or remove multiple sources and consumers independently. A cons
 ## Try governed sharing
 
 1. Open Session A and select **Memory spaces** in the Session header.
-2. Create `Sellora`. Session A becomes the owner and automatically uses the space.
+2. Create `Sellora`. Session A becomes the owner and automatically uses the space. On DSH builds with Workspace-row extension slots, you may instead select at least two Sessions in the sidebar and choose **Create memory space**; the first selected Session becomes the owner.
 3. In the manager, select **Select conversation history…**, choose loaded user or model messages, and save a `constraint` such as “UI changes must not alter business APIs, routes, permissions, or data structures.” Review the sensitive-content warning first.
 4. Make Session B use the memory: open `Sellora`, select **Connect other Sessions…**, find B across the listed Workspaces, choose **Use space memories**, and select automatic, confirmation, or paused mode.
 5. Make Session B contribute instead: use the same dialog and choose **Memory source**. Optionally summarize and import its existing history. Without that checkbox, neither existing history nor future conversation is copied.
@@ -112,7 +112,7 @@ Schema version 4 stores independent source and consumer tables. A version 3 data
 
 ## Compatibility and installation
 
-The package targets stock DeepSeek Harness packages in the range `>=0.1.0-rc.6 <0.2.0` and is developed against rc.7. It registers only published client slots and does not require a fork or patch of the official repository.
+The package targets stock DeepSeek Harness packages in the range `>=0.1.0-rc.6 <0.2.0` and is developed against rc.7. It registers only published client slots and does not require a fork or patch of the official repository. The sidebar batch selector appears only when the installed DSH declares the published Workspace-row leading and overlay slots; the Memory spaces header flow works without them.
 
 Install from the GitHub repository into an existing Web Profile (the same three commands shown above):
 

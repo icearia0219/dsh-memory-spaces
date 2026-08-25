@@ -8,6 +8,7 @@ import {
 import { MEMORY_SPACES_CLIENT_INJECT } from '../src/client/dependencies.ts'
 import { executeCommandCompat } from '../src/client/execute-command.ts'
 import { connectSelectedSessions } from '../src/client/session-connection.ts'
+import { MemoryShareController } from '../src/client/share-controller.ts'
 
 const event = {
   type: 'command/run',
@@ -95,10 +96,38 @@ test('the client uses only published stock DSH slots', async () => {
     'conversation.chat.node',
     'conversation.session.header.actions',
     'conversation.input.dock',
+    'sidebar.workspaces.session.leading',
+    'sidebar.workspaces.overlay',
     'conversation.chat.commandview',
     'conversation.chat.commandview',
   ])
-  assert.doesNotMatch(source, /sidebar\.workspaces|conversation\.chat\.(?:user|assistant)-actions/u)
+  assert.doesNotMatch(source, /name: 'sidebar\.workspaces'|conversation\.chat\.(?:user|assistant)-actions/u)
+})
+
+test('sidebar selection seeds a new-space flow with the first selected session as owner', () => {
+  const controller = new MemoryShareController()
+  const owner = { sessionId: 'session-owner', title: 'Owner' }
+  const source = { sessionId: 'session-source', title: 'Source' }
+  controller.toggleSession(owner)
+  controller.toggleSession(source)
+  controller.openNewSpaceFromSelection()
+  assert.deepEqual(controller.getSnapshot().dialog, {
+    kind: 'connect',
+    sessions: [owner, source],
+    createNew: true,
+  })
+  controller.toggleSession(source)
+  assert.deepEqual(Object.keys(controller.getSnapshot().sidebarSessions), ['session-owner'])
+})
+
+test('governance dialogs own a bounded scrollport and successful private commands leave no transcript row', async () => {
+  const ui = await readFile(new URL('../src/client/MemoryShareUi.tsx', import.meta.url), 'utf8')
+  const css = await readFile(new URL('../src/client/MemoryShareUi.module.css', import.meta.url), 'utf8')
+  const commandView = await readFile(new URL('../src/client/MemoryShareCommandView.tsx', import.meta.url), 'utf8')
+  assert.match(ui, /contentClassName=\{css\.dialogContent/u)
+  assert.match(css, /\.dialogContent\{[^}]*overflow-y:auto/u)
+  assert.match(commandView, /if \(state === 'success'\) return null/u)
+  assert.doesNotMatch(commandView, /记忆空间操作已处理|分享操作已处理/u)
 })
 
 test('snapshot UI renders text without raw HTML and removes bearer query data before inspection', async () => {

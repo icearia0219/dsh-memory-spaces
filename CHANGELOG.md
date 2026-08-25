@@ -20,6 +20,9 @@ All notable changes to this project are documented here. The format follows Keep
 - Applied the governance memory limit globally across visible spaces instead of once per space.
 - Aligned browser and Host source/consumer batch operations at 1,000 Sessions.
 - Added stable browser-test semantics, alert roles, and Session-keyed governance dialogs.
+- Added a progressive-enhancement sidebar Session selector for DSH builds that publish Workspace-row leading and overlay slots.
+- Applied governance mutation responses directly, added explicit creation feedback, bounded long dialog content with a scrollport, and hid successful private command rows while retaining working and error states.
+- Made the CI workflow reusable as a release gate, added tag/package/changelog validation, required a trusted-publishing-capable npm CLI, and created GitHub Release notes from the matching changelog section after npm publication.
 
 ### Security
 

@@ -18,6 +18,24 @@ import { connectSelectedSessions } from './session-connection.ts'
 import { MemoryShareController, type SelectedSession } from './share-controller.ts'
 import css from './MemoryShareUi.module.css'
 
+interface MemoryWorkspaceSessionOwnerProps {
+  readonly sessionId: SessionId
+  readonly title: string
+}
+
+declare module '@deepseek-ai/dsh-client-ui-slots' {
+  interface SlotMap {
+    /** Optional leading content for one Session row in newer DSH builds. */
+    'sidebar.workspaces.session.leading': {
+      kind: 'list'
+      scope: 'root'
+      owner: MemoryWorkspaceSessionOwnerProps
+    }
+    /** Browser-level controls that outlive individual Session rows in newer DSH builds. */
+    'sidebar.workspaces.overlay': { kind: 'list'; scope: 'root' }
+  }
+}
+
 /** Shared services supplied to all memory-space UI entries. */
 export interface MemoryShareInjected {
   controller: MemoryShareController
@@ -27,6 +45,8 @@ export interface MemoryShareInjected {
 type Shared = InjectFace<MemoryShareInjected>
 type HeaderProps = PropsRuntime<'conversation.session.header.actions'> & Shared
 type PreviewProps = PropsRuntime<'conversation.input.dock'> & Shared & { input: { readonly draft: string } }
+type SidebarSessionLeadingProps = PropsRuntime<'sidebar.workspaces.session.leading'> & Shared
+type SidebarOverlayProps = PropsRuntime<'sidebar.workspaces.overlay'> & Shared
 
 const MEMORY_TYPE_OPTIONS = [
   ['fact', '事实'], ['decision', '决策'], ['constraint', '约束'], ['preference', '偏好'],
@@ -40,6 +60,31 @@ interface OpenSnapshotView { snapshots: ReadonlyArray<{ title: string; content: 
 
 function useShare(controller: MemoryShareController) {
   return useSyncExternalStore(controller.subscribe, controller.getSnapshot, controller.getSnapshot)
+}
+
+/** Checkbox that adds one visible sidebar Session to a user-controlled batch. */
+export function MemorySidebarSessionLeading({ controller, sessionId, title }: SidebarSessionLeadingProps) {
+  const selected = useShare(controller).sidebarSessions[sessionId] !== undefined
+  return <input
+    className={css.rowCheckbox}
+    type="checkbox"
+    checked={selected}
+    aria-label={`${selected ? '取消选择' : '选择'}会话“${title}”`}
+    data-memory-session-select={sessionId}
+    onClick={event => { event.stopPropagation() }}
+    onPointerDown={event => { event.stopPropagation() }}
+    onChange={() => { controller.toggleSession({ sessionId, title }) }}
+  />
+}
+
+/** Persistent action tray for creating a memory space from selected sidebar Sessions. */
+export function MemorySidebarSelectionTray({ controller }: SidebarOverlayProps) {
+  const selected = Object.values(useShare(controller).sidebarSessions)
+  if (selected.length === 0) return null
+  return <aside className={css.selectionTray} data-memory-session-selection role="status" aria-live="polite">
+    <div className={css.selectionSummary}><strong>已选择 {selected.length} 个会话</strong><span>{selected.length < 2 ? '请再选择至少一个会话' : `“${selected[0]?.title ?? ''}”将作为空间所有者`}</span></div>
+    <div className={css.trayActions}><Button size="sm" variant="ghost" onClick={() => { controller.clear() }}>取消选择</Button><Button size="sm" variant="primary" disabled={selected.length < 2} onClick={() => { controller.openNewSpaceFromSelection() }}>新建记忆空间</Button></div>
+  </aside>
 }
 
 function currentSession(useSessions: HeaderProps['useSessions'], sessionId: SessionId): SelectedSession {
@@ -147,7 +192,7 @@ function MemoryShareOverlay({
   }
   return <>
     {state.dialog?.kind === 'manage' && state.dialog.sessions[0] !== undefined && <GovernanceDialog key={state.dialog.sessions[0].sessionId} controller={controller} remote={remote} session={state.dialog.sessions[0]} useSessions={useSessions} useWorkspaces={useWorkspaces} />}
-    {state.dialog?.kind === 'connect' && state.dialog.sessions[0] !== undefined && <ConnectDialog controller={controller} remote={remote} governing={state.dialog.sessions[0]} preferredSpaceName={state.dialog.spaceName} useSessions={useSessions} useWorkspaces={useWorkspaces} />}
+    {state.dialog?.kind === 'connect' && state.dialog.sessions[0] !== undefined && <ConnectDialog controller={controller} remote={remote} governing={state.dialog.sessions[0]} initialSessions={state.dialog.sessions} preferredSpaceName={state.dialog.spaceName} createNew={state.dialog.createNew ?? false} useSessions={useSessions} useWorkspaces={useWorkspaces} />}
     {state.dialog?.kind === 'snapshot' && state.dialog.sessions[0] !== undefined && <SnapshotDialog controller={controller} remote={remote} session={state.dialog.sessions[0]} nodes={nodes} selectedMessages={state.messages} />}
     <Modal open={incoming !== null || incomingError !== ''} onClose={dismissIncoming} title="打开只读会话快照" description="此链接只提供所选对话的只读副本，不会成为记忆来源，也不会让会话使用空间记忆。" footer={incoming === null ? <Button variant="primary" onClick={dismissIncoming}>关闭</Button> : <><Button variant="outline" onClick={dismissIncoming}>取消</Button><Button variant="primary" disabled={incomingBusy} onClick={() => { void openIncoming() }}>查看快照</Button></>}>
       {incoming !== null && <div className={css.summaryCard}><p><strong>有效期至</strong><span>{new Date(incoming.view.link.expiresAt).toLocaleString('zh-CN')}</span></p><p><strong>已打开次数</strong><span>{incoming.view.link.useCount} / {incoming.view.link.maxUses}</span></p></div>}
@@ -160,7 +205,8 @@ function MemoryShareOverlay({
 }
 
 interface MemberPresentation { title: string; workspace: string }
-type GovernanceMutation = (operation: string, payload: object) => Promise<boolean>
+type GovernanceMutationResult = MemoryGovernanceState | { readonly state: MemoryGovernanceState }
+type GovernanceMutation = (operation: string, payload: object) => Promise<MemoryGovernanceState | undefined>
 
 function GovernanceDialog({ controller, remote, session, useSessions, useWorkspaces }: {
   controller: MemoryShareController
@@ -172,21 +218,35 @@ function GovernanceDialog({ controller, remote, session, useSessions, useWorkspa
   const [state, setState] = useState<MemoryGovernanceState | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const [notice, setNotice] = useState('')
   const [spaceName, setSpaceName] = useState('')
   const [selectedSpaceId, setSelectedSpaceId] = useState<string>()
   const [expandedMemory, setExpandedMemory] = useState<string>()
   const [deleteSpace, setDeleteSpace] = useState<SessionSpaceView>()
   const sessionRows = useSessions(snapshot => snapshot.byId)
   const workspaces = useWorkspaces(snapshot => snapshot.items)
-  const reload = async (): Promise<void> => { setState(await executeMemoryUi<MemoryGovernanceState>(remote, session.sessionId, 'state', {})) }
   useEffect(() => { let active = true; void executeMemoryUi<MemoryGovernanceState>(remote, session.sessionId, 'state', {}).then(value => { if (active) setState(value) }, caught => { if (active) setError(messageOf(caught)) }); return () => { active = false } }, [remote, session.sessionId])
   const mutate: GovernanceMutation = async (operation, payload) => {
-    setBusy(true); setError('')
-    try { await executeMemoryUi(remote, session.sessionId, operation, payload); await reload(); return true }
-    catch (caught) { setError(messageOf(caught)); return false }
+    setBusy(true); setError(''); setNotice('')
+    try {
+      const result = await executeMemoryUi<GovernanceMutationResult>(remote, session.sessionId, operation, payload)
+      const next = 'state' in result ? result.state : result
+      setState(next)
+      return next
+    }
+    catch (caught) { setError(messageOf(caught)); return undefined }
     finally { setBusy(false) }
   }
-  const create = async (): Promise<void> => { if (spaceName.trim() === '') return; if (await mutate('create-space', { spaceName })) setSpaceName('') }
+  const create = async (): Promise<void> => {
+    const normalizedName = spaceName.trim()
+    if (normalizedName === '') return
+    const next = await mutate('create-space', { spaceName: normalizedName })
+    if (next === undefined) return
+    const created = next.spaces.find(view => view.space.name === normalizedName)
+    if (created !== undefined) setSelectedSpaceId(created.space.id)
+    setSpaceName('')
+    setNotice(`已创建空间“${normalizedName}”`)
+  }
   const selectedView = state?.spaces.find(view => view.space.id === selectedSpaceId) ?? state?.spaces[0]
   const presentMember = (memberSessionId: SessionId): MemberPresentation => {
     const workspace = workspaces.find(item => item.sessionIds.includes(memberSessionId))
@@ -200,6 +260,7 @@ function GovernanceDialog({ controller, remote, session, useSessions, useWorkspa
     <div className={css.governance} data-memory-spaces-governance>
       <section className={css.managerToolbar}><div><h3>当前会话内容</h3><p>在插件管理器中多选已加载的用户和模型消息，再保存为可追溯记忆或创建只读快照。</p></div><Button variant="outline" icon={<IconShareOutline16 />} onClick={() => { controller.openSnapshot(session) }}>选择历史对话…</Button></section>
       <section className={css.createSpace}><div><h3>新建空间</h3><p>创建后，当前会话成为所有者，并默认自动使用空间记忆。</p></div><div className={css.inlineForm}><Input value={spaceName} data-memory-space-name placeholder="空间名称" onChange={event => { setSpaceName(event.currentTarget.value) }} /><Button variant="outline" data-memory-space-create disabled={busy || spaceName.trim() === ''} onClick={() => { void create() }}>创建</Button></div></section>
+      {notice !== '' && <p className={css.creationStatus} data-memory-space-status role="status">{notice}</p>}
       {state === null && error === '' && <p className={css.empty}>正在读取空间状态…</p>}
       {state?.spaces.length === 0 && <p className={css.empty}>当前会话尚未加入任何记忆空间。</p>}
       {state !== null && state.spaces.length > 0 && selectedView !== undefined && <div className={css.managerLayout}>
@@ -346,7 +407,7 @@ function MemoryRow({ memory, manageable, expanded, busy, sessionTitle, onExpand,
       <div className={css.detailSection}><h4>使用的原始消息</h4>{memory.sourceMessages.length === 0 ? <p className={css.empty}>未保留原始消息摘录。</p> : memory.sourceMessages.map(message => <div className={css.sourceMessage} key={message.seq}><span>seq {message.seq} · {sourceRoleLabel(message.role)}</span><p>{message.excerpt}</p></div>)}</div>
       <div className={css.detailSection}><h4>最近调用记录</h4>{memory.recentUsages.length === 0 ? <p className={css.empty}>尚未注入任何回答。</p> : memory.recentUsages.map((usage, index) => <p className={css.usage} key={`${usage.targetSessionId}-${usage.usedAt}-${index}`}>会话 {shortId(usage.targetSessionId)}{usage.responseSeq === undefined ? '' : ` · 回答 seq ${usage.responseSeq}`} · {formatTime(usage.usedAt)}</p>)}</div>
       {manageable && <div className={css.memoryControls}><label className={css.compactField}><span>状态</span><select className={css.select} value={memory.status} disabled={busy} onChange={event => { void onMutate('set-memory-status', { memoryId: memory.id, status: event.currentTarget.value }) }}>{(['active', 'superseded', 'disputed', 'expired', 'deleted'] as const).map(status => <option key={status} value={status}>{statusLabel(status)}</option>)}</select></label><Button size="sm" variant="outline" disabled={busy} onClick={() => { setEditing(value => !value) }}>创建新版本</Button></div>}
-      {editing && <div className={css.versionEditor}><select className={css.select} value={type} onChange={event => { setType(event.currentTarget.value as MemoryType) }}>{MEMORY_TYPE_OPTIONS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select><textarea value={content} onChange={event => { setContent(event.currentTarget.value) }} /><div className={css.editorActions}><Button size="sm" variant="ghost" onClick={() => { setEditing(false) }}>取消</Button><Button size="sm" variant="primary" disabled={busy || content.trim() === '' || content.trim() === memory.content} onClick={() => { void onMutate('update-memory', { memoryId: memory.id, content, type, sourceSessionTitle: sessionTitle }).then(() => { setEditing(false) }) }}>保存为新版本</Button></div></div>}
+      {editing && <div className={css.versionEditor}><select className={css.select} value={type} onChange={event => { setType(event.currentTarget.value as MemoryType) }}>{MEMORY_TYPE_OPTIONS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select><textarea value={content} onChange={event => { setContent(event.currentTarget.value) }} /><div className={css.editorActions}><Button size="sm" variant="ghost" onClick={() => { setEditing(false) }}>取消</Button><Button size="sm" variant="primary" disabled={busy || content.trim() === '' || content.trim() === memory.content} onClick={() => { void onMutate('update-memory', { memoryId: memory.id, content, type, sourceSessionTitle: sessionTitle }).then(changed => { if (changed !== undefined) setEditing(false) }) }}>保存为新版本</Button></div></div>}
     </div>}
   </article>
 }
@@ -359,24 +420,26 @@ function DeleteSpacePanel({ view, busy, onClose, onConfirm }: { view: SessionSpa
 }
 
 function ConnectDialog({
-  controller, remote, governing, preferredSpaceName, useSessions, useWorkspaces,
+  controller, remote, governing, initialSessions, preferredSpaceName, createNew, useSessions, useWorkspaces,
 }: {
   controller: MemoryShareController
   remote: ClientRemote
   governing: SelectedSession
+  initialSessions: readonly SelectedSession[]
   preferredSpaceName: string | undefined
+  createNew: boolean
   useSessions: HeaderProps['useSessions']
   useWorkspaces: HeaderProps['useWorkspaces']
 }) {
   const sessionState = useSessions(snapshot => snapshot)
   const workspaceState = useWorkspaces(snapshot => snapshot)
   const [state, setState] = useState<MemoryGovernanceState | null>(null)
-  const [choice, setChoice] = useState<'existing' | 'new'>(preferredSpaceName === undefined ? 'new' : 'existing')
+  const [choice, setChoice] = useState<'existing' | 'new'>(createNew || preferredSpaceName === undefined ? 'new' : 'existing')
   const [spaceName, setSpaceName] = useState(preferredSpaceName ?? '')
   const [relation, setRelation] = useState<'source' | 'consumer'>('source')
   const [mode, setMode] = useState<MemoryUseMode>('automatic')
   const [importHistory, setImportHistory] = useState(false)
-  const [selectedIds, setSelectedIds] = useState<readonly SessionId[]>([])
+  const [selectedIds, setSelectedIds] = useState<readonly SessionId[]>(() => initialSessions.slice(1).map(session => session.sessionId))
   const [query, setQuery] = useState('')
   const [acknowledged, setAcknowledged] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -387,6 +450,7 @@ function ConnectDialog({
     void executeMemoryUi<MemoryGovernanceState>(remote, governing.sessionId, 'state', {}).then(value => {
       if (!active) return
       setState(value)
+      if (createNew) return
       const preferred = value.ownedSpaces.find(space => space.name === preferredSpaceName)
       const fallback = value.ownedSpaces[0]
       if (preferred !== undefined || (preferredSpaceName === undefined && fallback !== undefined)) {
@@ -395,7 +459,7 @@ function ConnectDialog({
       }
     }, caught => { if (active) setError(messageOf(caught)) })
     return () => { active = false }
-  }, [governing.sessionId, preferredSpaceName, remote])
+  }, [createNew, governing.sessionId, preferredSpaceName, remote])
 
   const archived = new Set(workspaceState.archivedSessionIds)
   const availableSessions = useMemo(() => sessionState.ids
@@ -430,7 +494,7 @@ function ConnectDialog({
     finally { setBusy(false) }
   }
   const targetCount = selectedSessions.length
-  return <Modal open onClose={() => { controller.close() }} title="把会话连接到记忆空间" description={`当前会话“${governing.title}”负责治理。可跨工作区选择多个本地会话。`} className={css.dialogModal ?? ''} footer={done ? <Button variant="primary" onClick={() => { controller.clear() }}>完成</Button> : <><Button variant="outline" onClick={() => { controller.close() }}>取消</Button><Button variant="primary" disabled={busy || !acknowledged || spaceName.trim() === '' || targetCount === 0} onClick={() => { void submit() }}>{busy ? '正在连接…' : `连接 ${targetCount} 个会话`}</Button></>}>
+  return <Modal open onClose={() => { controller.close() }} title="把会话连接到记忆空间" description={`当前会话“${governing.title}”负责治理。可跨工作区选择多个本地会话。`} className={css.dialogModal ?? ''} contentClassName={css.dialogContent ?? ''} footer={done ? <Button variant="primary" onClick={() => { controller.clear() }}>完成</Button> : <><Button variant="outline" onClick={() => { controller.close() }}>取消</Button><Button variant="primary" disabled={busy || !acknowledged || spaceName.trim() === '' || targetCount === 0} onClick={() => { void submit() }}>{busy ? '正在连接…' : `连接 ${targetCount} 个会话`}</Button></>}>
     {done ? <div className={css.success}><div className={css.successIcon}><IconCheckOutline14 size={18} /></div><h3>{targetCount} 个会话已连接</h3><p>{relation === 'source' ? `它们已成为“${spaceName}”的记忆来源。${importHistory ? '所选历史已经分别总结并导入。' : '既有历史没有被复制，后续内容也不会自动写入。'}` : `它们现在以“${useModeLabel(mode)}”方式使用“${spaceName}”的记忆。`}</p></div> : <div className={css.form}>
       <fieldset className={css.section}><legend>选择会话</legend><Input value={query} placeholder="按会话标题搜索" onChange={event => { setQuery(event.currentTarget.value) }} /><div className={css.sessionPicker} role="group" aria-label="可连接的本地会话">{availableSessions.length === 0 && <p className={css.empty}>没有匹配的可连接会话。</p>}{availableSessions.map(summary => { const workspace = workspaceState.items.find(item => item.sessionIds.includes(summary.id)); return <label className={css.sessionChoice} key={summary.id} data-selected={selectedIds.includes(summary.id) || undefined}><input type="checkbox" checked={selectedIds.includes(summary.id)} onChange={() => { toggleSession(summary.id) }} /><span><strong>{summary.displayTitle}</strong><small>{workspace?.title ?? '未归属工作区'} · {shortId(summary.id)}{summary.blank ? ' · 空白会话' : ''}</small></span></label> })}</div><p className={css.inlineHint}>已选择 {targetCount} 个会话。此处只建立关系，不删除或移动原始会话。</p></fieldset>
       <fieldset className={css.section}><legend>空间</legend><Radio label="使用当前会话拥有的空间" checked={choice === 'existing'} disabled={(state?.ownedSpaces.length ?? 0) === 0} onChange={() => { setChoice('existing'); setSpaceName(state?.ownedSpaces[0]?.name ?? '') }} />{choice === 'existing' && <select className={css.select} value={spaceName} onChange={event => { setSpaceName(event.currentTarget.value) }}>{state?.ownedSpaces.map(space => <option key={space.id} value={space.name}>{space.name}</option>)}</select>}<Radio label="新建记忆空间后连接" checked={choice === 'new'} onChange={() => { setChoice('new'); setSpaceName('') }} />{choice === 'new' && <Input value={spaceName} placeholder="新空间名称" onChange={event => { setSpaceName(event.currentTarget.value) }} />}</fieldset>
@@ -477,7 +541,7 @@ function SnapshotDialog({ controller, remote, session, nodes, selectedMessages }
   }
   const sourceSpaces = state?.spaces.filter(space => space.source !== undefined || space.space.ownerSessionId === first?.sessionId) ?? []
   const canSubmit = acknowledged && !busy && first !== undefined && totalSelected > 0 && (tab === 'link' || (spaceName !== '' && content.trim() !== ''))
-  return <Modal open onClose={() => { controller.close() }} title="保存或分享所选对话" description={totalSelected > 0 ? `精确选择了 ${totalSelected} 条对话。` : '请先选择至少一条具体消息；插件不会隐式分享整段会话历史。'} className={css.dialogModal ?? ''} footer={completion === null ? <><Button variant="outline" onClick={() => { controller.close() }}>取消</Button><Button variant="primary" disabled={!canSubmit} onClick={() => { void (tab === 'save' ? save() : createLink()) }}>{busy ? '正在处理…' : tab === 'save' ? '保存到记忆空间' : '创建只读链接'}</Button></> : completion.kind === 'link' ? <><Button variant="outline" onClick={() => { controller.clear() }}>完成</Button><Button variant="primary" icon={<IconCopyOutline16 />} onClick={() => { void writeClipboard(completion.url).then(setCopied) }}>{copied ? '已复制' : '复制链接'}</Button></> : <Button variant="primary" onClick={() => { controller.clear() }}>完成</Button>}>
+  return <Modal open onClose={() => { controller.close() }} title="保存或分享所选对话" description={totalSelected > 0 ? `精确选择了 ${totalSelected} 条对话。` : '请先选择至少一条具体消息；插件不会隐式分享整段会话历史。'} className={css.dialogModal ?? ''} contentClassName={css.dialogContent ?? ''} footer={completion === null ? <><Button variant="outline" onClick={() => { controller.close() }}>取消</Button><Button variant="primary" disabled={!canSubmit} onClick={() => { void (tab === 'save' ? save() : createLink()) }}>{busy ? '正在处理…' : tab === 'save' ? '保存到记忆空间' : '创建只读链接'}</Button></> : completion.kind === 'link' ? <><Button variant="outline" onClick={() => { controller.clear() }}>完成</Button><Button variant="primary" icon={<IconCopyOutline16 />} onClick={() => { void writeClipboard(completion.url).then(setCopied) }}>{copied ? '已复制' : '复制链接'}</Button></> : <Button variant="primary" onClick={() => { controller.clear() }}>完成</Button>}>
     {completion === null ? <div className={css.form}>
       <fieldset className={css.section}><legend>选择当前会话的历史消息</legend><div className={css.messagePicker} role="group" aria-label="当前会话中可选择的历史消息">{selectableMessages.length === 0 && <p className={css.empty}>当前已加载记录中没有可选择的用户或模型消息。</p>}{selectableMessages.map(message => { const selected = selectedMessages[session.sessionId]?.[message.seq] !== undefined; return <label className={css.messageChoice} key={`${message.role}-${message.seq}`} data-selected={selected || undefined}><input type="checkbox" checked={selected} onChange={() => { controller.toggleMessage(session, { seq: message.seq, text: message.text }) }} /><span className={css.messageRole}>{message.role === 'user' ? '用户' : '模型'}</span><span><strong>{message.text}</strong><small>seq {message.seq} · {formatTime(message.time)}</small></span></label> })}</div><p className={css.inlineHint}>这里只显示当前浏览器已加载的历史。需要选择更早消息时，先返回会话向上加载历史，再重新打开此窗口。</p></fieldset>
       <div className={css.tabs}><button type="button" data-active={tab === 'save' || undefined} disabled={totalSelected === 0} onClick={() => { setTab('save') }}>保存为可追溯记忆</button><button type="button" data-active={tab === 'link' || undefined} onClick={() => { setTab('link') }}><IconLinkOutline16 size={14} />只读会话链接</button></div>

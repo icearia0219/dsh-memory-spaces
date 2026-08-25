@@ -4,7 +4,7 @@ Audit date: 2026-08-25. Results in this report come from observed local commands
 
 ## 1. Executive summary
 
-Score: 92/100, grade A-. The source is suitable for a public GitHub repository. An npm release remains conditional on hosted CI passing, an npm trusted publisher being configured, and the tagged provenance workflow completing. Open severity count: P0 0, P1 0, P2 2, P3 2.
+Score: 92/100, grade A-. The source is suitable for a public GitHub repository. The hosted cross-platform and stock-DSH matrix passes on `main` and is reused as a tag gate. An npm release remains conditional on the one-time first-version bootstrap, subsequent trusted-publisher configuration, and the tagged provenance workflow completing. Open severity count: P0 0, P1 1, P2 2, P3 2.
 
 The plugin has a coherent independent architecture, direct-human governance, profile-local schema-versioned storage, provenance and version chains, bounded answer-time injection, optional history import, selected-message snapshots, deterministic migration/security tests, stock DSH rc.6/rc.7 local mount evidence, and an inspected package path. The largest observed product limit is the 20.6-second p95 governance view at 100,000 memories; lexical recall at the same scale remains just inside the 500-millisecond reference target.
 
@@ -23,10 +23,10 @@ The standalone package emits an ESM Host entry, a CJS browser entry required by 
 
 | ID | Severity | Problem | Evidence and consequence | Repair | Regression evidence | Status |
 | --- | --- | --- | --- | --- | --- | --- |
-| F01 | P0 | Public/model-replayable governance could alter durable relationships | Pasted or model-generated commands could change sharing state | Moved relationship governance to browser-private, Session-addressed direct-human operations; public verbs fail | `test/plugin.test.mjs`, `test/ui-command.test.mjs` | Resolved |
+| F01 | P0 | Public/model-replayable governance could alter durable relationships | Pasted or model-generated commands could change sharing state | Moved relationship governance to browser-private, Session-addressed direct-human operations; public verbs fail | `test/plugin.test.mjs` | Resolved |
 | F02 | P0 | Snapshot creation could imply all-history sharing | Users could disclose unreviewed dialogue | Snapshot creation accepts explicit eligible message selections only | `test/sharing.test.mjs`, client tests | Resolved |
-| F03 | P0 | Snapshot token purpose and query handling were insufficiently separated | A leaked bearer could cross privilege purposes or remain in navigation state | Separate access/append hashes, purpose binding, expiry, atomic limits, revocation, and query cleanup | `test/security.test.mjs`, `test/sharing.test.mjs` | Resolved |
-| F04 | P0 | Schema 3 migration lacked complete backup/race proof | Concurrent open or failure could produce ambiguous recovery | Consistent backup, transaction, rollback/reopen, and two-process competition coverage | `test/migration.test.mjs` | Resolved |
+| F03 | P0 | Snapshot token purpose and query handling were insufficiently separated | A leaked bearer could cross privilege purposes or remain in navigation state | Separate access/append hashes, purpose binding, expiry, atomic limits, revocation, and query cleanup | `test/sharing.test.mjs`, `test/plugin.test.mjs`, `test/client.test.mjs` | Resolved |
+| F04 | P0 | Schema 3 migration lacked complete backup/race proof | Concurrent open or failure could produce ambiguous recovery | Consistent backup, transaction, rollback/reopen, and two-process competition coverage | `test/database.test.mjs` | Resolved |
 | F05 | P1 | Unknown schema could be mutated by journal configuration | A rejected database could still change on disk | Validate schema before journal mutation and fail closed | migration unknown-schema test | Resolved |
 | F06 | P1 | A global default path could mix Profiles | Sessions from independent Profiles could share local data unintentionally | Resolve installed storage under the owning Profile; source links require an explicit path | `test/profile-storage.test.mjs`, real source-link mounts | Resolved |
 | F07 | P1 | Preview decisions and pending usage could be reused or misreported | A later turn could receive stale choices; a non-answer could appear used | Query-bound ten-minute choices are consumed once; usage attaches only to a durable answer event | plugin and database usage tests | Resolved |
@@ -39,15 +39,15 @@ The standalone package emits an ESM Host entry, a CJS browser entry required by 
 | F14 | P2 | Governance aggregation is too slow at 100,000 memories | Measured p95 is 20,586.53 ms | No release-blocking correctness fix; add pagination or aggregate-specific queries in a later release | `scripts/benchmark.mjs` | Open |
 | F15 | P2 | Accessibility has no complete keyboard, screen-reader, contrast, or automated audit | Primary browser interaction does not prove full accessibility | Keep claim `PARTIAL`; require a dedicated audit before claiming conformance | claim C16 | Open |
 
-The remaining P3 items are the lack of a paid-provider end-to-end history-summary/model-answer run and the accepted use of lexical retrieval without semantic conflict detection. Both are documented product limits rather than hidden correctness claims.
+The open P1 is first-version npm publication: npm requires the package to exist before its trusted publisher can be configured. The release workflow supports a short-lived `NPM_BOOTSTRAP_TOKEN` for that one publish; the secret must then be deleted and replaced by the repository/workflow/environment trust relationship. The remaining P3 items are the lack of a paid-provider end-to-end history-summary/model-answer run and the accepted use of lexical retrieval without semantic conflict detection. Both are documented product limits rather than hidden correctness claims.
 
 ## 5. README claim audit
 
-[Claim verification](CLAIM_VERIFICATION.md) records 20 material claims: 16 PASS, 2 PARTIAL, 2 UNVERIFIED, and 0 FAIL. The README does not claim encrypted storage, authenticated remote identity, secure physical erasure, semantic conflict detection, embedding recall, or guaranteed prompt-injection prevention. Stock rc.6/rc.7 compatibility is described as locally verified; hosted CI and npm publication remain explicitly unverified.
+[Claim verification](CLAIM_VERIFICATION.md) records 20 material claims: 17 PASS, 2 PARTIAL, 1 UNVERIFIED, and 0 FAIL. The README does not claim encrypted storage, authenticated remote identity, secure physical erasure, semantic conflict detection, embedding recall, or guaranteed prompt-injection prevention. Stock rc.6/rc.7 compatibility is locally and publicly verified; npm publication remains explicitly unverified.
 
 ## 6. Tests and coverage
 
-The final local suite contains 63 passing tests. Focused migration and security suites pass. Coverage from `coverage/coverage-summary.json`: statements 96.81% (3,623/3,742), lines 96.81% (3,623/3,742), functions 98.90% (181/183), and branches 83.31% (709/851). The database module has 98.15% lines and 90.19% branches. Configured global gates are 95% statements/lines/functions and 80% branches.
+The final local suite contains 68 passing tests, including three release-metadata tests. Focused migration and security suites pass. Coverage from `coverage/coverage-summary.json`: statements 96.81% (3,623/3,742), lines 96.81% (3,623/3,742), functions 98.90% (181/183), and branches 83.31% (709/851). The database module has 98.15% lines and 90.19% branches. Configured global gates are 95% statements/lines/functions and 80% branches.
 
 ## 7. Migration and integrity
 
@@ -59,13 +59,13 @@ Automated security evidence covers direct-human origin and replay control, owner
 
 ## 9. Actual DSH verification
 
-Stock DSH rc.6 and rc.7 each passed a fresh-Profile tarball install, `--dump-config`, real Web boot, browser core memory flow, positive preview token estimate, per-memory suppression, second mount, FTS integrity, uninstall, and post-uninstall dump. Both versions also passed source-link installation, mount with an explicit Profile database path, and uninstall. The rc.6 compatibility test first exposed the command-arity difference and passed after the narrow adapter repair. No paid model/API key was used, so the full external answer-generation and history-summary route remains P3 and is not claimed as verified.
+Stock DSH rc.6 and rc.7 each passed a fresh-Profile tarball install, `--dump-config`, real Web boot, browser core memory flow, positive preview token estimate, per-memory suppression, second mount, FTS integrity, uninstall, and post-uninstall dump. Both versions also passed source-link installation, mount with an explicit Profile database path, and uninstall. The public GitHub Actions jobs repeat these flows. Stock rc.6/rc.7 do not expose the optional Workspace-row slots, so the sidebar flow has client-test evidence but is not part of the stock mount PASS. The rc.6 compatibility test first exposed the command-arity difference and passed after the narrow adapter repair. No paid model/API key was used, so the full external answer-generation and history-summary route remains P3 and is not claimed as verified.
 
 ## 10. Packaging and release
 
 Strict package validation uses build, publint, attw, `npm pack --dry-run --json`, a real `pnpm pack`, and an allowlist-style tarball inspection. The release artifact must contain Host/client/types/config/docs and must not contain SQLite/WAL/SHM files, tokens, logs, `.env`, transcripts, tests, coverage, screenshots, caches, source, `node_modules`, or bundled DSH/React runtimes. The exact final tarball path, byte size, file count, and SHA-256 are recorded after the last package gate rather than embedded here because this report is itself inside the tarball. No upload or npm publish has occurred.
 
-The release workflow uses GitHub OIDC with npm provenance and no configured long-lived token, but it remains `UNVERIFIED` until the repository exists remotely, npm trusts the GitHub environment, and a tag runs successfully.
+The tag workflow first validates tag/package/changelog agreement, invokes the complete reusable CI and stock-mount matrix, publishes with an npm CLI that supports Trusted Publishing, and creates GitHub Release notes from the matching changelog section. It remains `UNVERIFIED` until the first package version is bootstrapped, npm trusts `icearia0219/dsh-memory-spaces` and `release.yml` for the `npm` environment, the temporary bootstrap secret is removed, and a tag completes successfully.
 
 ## 11. Performance
 
@@ -75,4 +75,4 @@ The release workflow uses GitHub OIDC with npm provenance and no configured long
 
 Observed failed attempts were retained as audit evidence: local `rg.exe` was denied and read-only discovery used PowerShell; npm's machine-level cache was not writable and package checks used a fresh temporary cache; Playwright initially lacked Chromium and passed after official browser installation; rc.6 initially rejected the rc.7 command arity and passed after the compatibility adapter; a source link without an explicit database path failed intentionally and then passed with the documented path; rc.7 browser automation initially stopped at onboarding and passed after handling the stock dialog; the benchmark first hit a 500/1,000 batch mismatch and passed after aligning the limit; the 100,000-memory run with 20 governance samples was interrupted after excessive runtime and was rerun with five samples, which confirmed the P2 latency failure; the installed desktop `dsh` was stale, so exact official npm rc.6/rc.7 artifacts were used.
 
-Known limits: no teams, account identity, remote memory invitation, cross-instance synchronization, embedding retrieval, semantic contradiction detector, storage encryption, secure physical deletion, or prompt-injection guarantee. Snapshot URLs depend on the Web deployment address and bearer secrecy. Hosted cross-platform CI, npm trusted publication, paid-provider output, complete accessibility, and 100,000-memory manager responsiveness remain outside the PASS set.
+Known limits: no teams, account identity, remote memory invitation, cross-instance synchronization, embedding retrieval, semantic contradiction detector, storage encryption, secure physical deletion, or prompt-injection guarantee. Snapshot URLs depend on the Web deployment address and bearer secrecy. npm trusted publication, paid-provider output, optional sidebar real-mount coverage, complete accessibility, and 100,000-memory manager responsiveness remain outside the PASS set.

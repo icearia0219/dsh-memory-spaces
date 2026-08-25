@@ -16,15 +16,18 @@ export interface ShareDialogSeed {
   readonly kind: 'manage' | 'connect' | 'snapshot'
   readonly sessions: readonly SelectedSession[]
   readonly spaceName?: string
+  readonly createNew?: boolean
 }
 
 export interface MemoryShareState {
+  readonly sidebarSessions: Readonly<Record<string, SelectedSession>>
   readonly sessions: Readonly<Record<string, SelectedSession>>
   readonly messages: Readonly<Record<string, Readonly<Record<number, SelectedMessage>>>>
   readonly dialog: ShareDialogSeed | null
 }
 
 const INITIAL_STATE: MemoryShareState = {
+  sidebarSessions: {},
   sessions: {},
   messages: {},
   dialog: null,
@@ -53,6 +56,22 @@ export class MemoryShareController {
       ...this.state,
       sessions: { ...this.state.sessions, [session.sessionId]: session },
       messages,
+    })
+  }
+
+  toggleSession(session: SelectedSession): void {
+    const sidebarSessions = { ...this.state.sidebarSessions }
+    if (sidebarSessions[session.sessionId] === undefined) sidebarSessions[session.sessionId] = session
+    else delete sidebarSessions[session.sessionId]
+    this.commit({ ...this.state, sidebarSessions })
+  }
+
+  openNewSpaceFromSelection(): void {
+    const sessions = Object.values(this.state.sidebarSessions)
+    if (sessions.length < 2) return
+    this.commit({
+      ...this.state,
+      dialog: { kind: 'connect', sessions, createNew: true },
     })
   }
 

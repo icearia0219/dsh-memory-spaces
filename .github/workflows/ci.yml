@@ -19,9 +19,9 @@ jobs:
         node: [22.19.0, 24.x]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node }}
           cache: pnpm
@@ -60,13 +60,13 @@ jobs:
       - name: Configure temporary DSH home
         run: echo "DSH_HOME=$RUNNER_TEMP/dsh-memory-home" >> "$GITHUB_ENV"
       - name: Check out plugin
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           path: plugin
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
         with:
           version: 11.22.0
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22.19.0
           cache: pnpm

@@ -78,7 +78,8 @@ jobs:
           pnpm pack --pack-destination "$RUNNER_TEMP/plugin-pack"
       - name: Install exact stock DSH npm artifact
         run: |
-          npm install --prefix "$RUNNER_TEMP/dsh-cli" --no-audit --no-fund "@deepseek-ai/dsh@${{ matrix.dsh }}"
+          mkdir -p "$RUNNER_TEMP/dsh-cli"
+          pnpm --dir "$RUNNER_TEMP/dsh-cli" add --prod --ignore-workspace --ignore-scripts "@deepseek-ai/dsh@${{ matrix.dsh }}"
           echo "DSH_BIN=$RUNNER_TEMP/dsh-cli/node_modules/@deepseek-ai/dsh/lib/bin.js" >> "$GITHUB_ENV"
       - name: Install tarball and dump composed config
         run: |

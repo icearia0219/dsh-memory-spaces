@@ -115,7 +115,6 @@ function MemoryShareOverlay({
 }: MemoryShareOverlayProps) {
   const state = useShare(controller)
   const current = useSessions(snapshot => snapshot.current)
-  const currentTitle = useSessions(snapshot => current === undefined ? undefined : snapshot.byId[current]?.displayTitle)
   const [incoming, setIncoming] = useState<{ token: string; view: IncomingLinkView } | null>(null)
   const [incomingBusy, setIncomingBusy] = useState(false)
   const [incomingError, setIncomingError] = useState('')

@@ -62,12 +62,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: plugin
-      - name: Check out fixed stock DSH
-        uses: actions/checkout@v4
-        with:
-          repository: deepseek-ai/deepseek-harness
-          ref: dsh-v${{ matrix.dsh }}
-          path: harness
       - uses: pnpm/action-setup@v4
         with:
           version: 11.22.0
@@ -75,64 +69,59 @@ jobs:
         with:
           node-version: 22.19.0
           cache: pnpm
-          cache-dependency-path: |
-            plugin/pnpm-lock.yaml
-            harness/pnpm-lock.yaml
+          cache-dependency-path: plugin/pnpm-lock.yaml
       - name: Install and pack plugin
         working-directory: plugin
         run: |
           pnpm install --frozen-lockfile
           pnpm exec playwright install --with-deps chromium
           pnpm pack --pack-destination "$RUNNER_TEMP/plugin-pack"
-      - name: Install stock DSH source
-        working-directory: harness
-        run: pnpm install --frozen-lockfile
+      - name: Install exact stock DSH npm artifact
+        run: |
+          npm install --prefix "$RUNNER_TEMP/dsh-cli" --no-audit --no-fund "@deepseek-ai/dsh@${{ matrix.dsh }}"
+          echo "DSH_BIN=$RUNNER_TEMP/dsh-cli/node_modules/@deepseek-ai/dsh/lib/bin.js" >> "$GITHUB_ENV"
       - name: Install tarball and dump composed config
-        working-directory: harness
         run: |
           TARBALL="$(find "$RUNNER_TEMP/plugin-pack" -name '*.tgz' -print -quit)"
-          pnpm dsh plugin --profile web add "$TARBALL"
-          pnpm dsh --profile web --dump-config > "$RUNNER_TEMP/dump-config.yml"
+          node "$DSH_BIN" plugin --profile web add "$TARBALL"
+          node "$DSH_BIN" --profile web --dump-config > "$RUNNER_TEMP/dump-config.yml"
           grep -q 'dsh-memory-spaces' "$RUNNER_TEMP/dump-config.yml"
-          node ../plugin/scripts/seed-dsh-workspace.mjs "$DSH_HOME" "$RUNNER_TEMP/synthetic-workspace"
+          node plugin/scripts/seed-dsh-workspace.mjs "$DSH_HOME" "$RUNNER_TEMP/synthetic-workspace"
       - name: Start, verify, and repeat mount
-        working-directory: harness
         run: |
           mkdir -p "$RUNNER_TEMP/mount-artifacts"
-          pnpm dsh --profile web --host 127.0.0.1 --port 3095 > "$RUNNER_TEMP/mount-artifacts/dsh-first.log" 2>&1 &
+          node "$DSH_BIN" --profile web --host 127.0.0.1 --port 3095 > "$RUNNER_TEMP/mount-artifacts/dsh-first.log" 2>&1 &
           FIRST_PID=$!
           for attempt in $(seq 1 60); do curl --fail --silent http://127.0.0.1:3095/ >/dev/null && break; sleep 1; done
-          node ../plugin/scripts/verify-mounted-web.mjs http://127.0.0.1:3095/ "$RUNNER_TEMP/mount-artifacts/first.png" --core
+          node plugin/scripts/verify-mounted-web.mjs http://127.0.0.1:3095/ "$RUNNER_TEMP/mount-artifacts/first.png" --core
           kill "$FIRST_PID"
           wait "$FIRST_PID" || true
-          pnpm dsh --profile web --host 127.0.0.1 --port 3095 > "$RUNNER_TEMP/mount-artifacts/dsh-second.log" 2>&1 &
+          node "$DSH_BIN" --profile web --host 127.0.0.1 --port 3095 > "$RUNNER_TEMP/mount-artifacts/dsh-second.log" 2>&1 &
           SECOND_PID=$!
           for attempt in $(seq 1 60); do curl --fail --silent http://127.0.0.1:3095/ >/dev/null && break; sleep 1; done
-          node ../plugin/scripts/verify-mounted-web.mjs http://127.0.0.1:3095/ "$RUNNER_TEMP/mount-artifacts/second.png"
+          node plugin/scripts/verify-mounted-web.mjs http://127.0.0.1:3095/ "$RUNNER_TEMP/mount-artifacts/second.png"
           kill "$SECOND_PID"
           wait "$SECOND_PID" || true
       - name: Uninstall and verify composition
-        working-directory: harness
         run: |
-          pnpm dsh plugin --profile web remove dsh-memory-spaces
-          pnpm dsh --profile web --dump-config > "$RUNNER_TEMP/dump-config-after-remove.yml"
+          node "$DSH_BIN" plugin --profile web remove dsh-memory-spaces
+          node "$DSH_BIN" --profile web --dump-config > "$RUNNER_TEMP/dump-config-after-remove.yml"
           ! grep -q 'dsh-memory-spaces' "$RUNNER_TEMP/dump-config-after-remove.yml"
       - name: Install linked source and verify mount
-        working-directory: harness
         env:
           DSH_MEMORY_SPACES_DATABASE_PATH: ${{ runner.temp }}/dsh-memory-home/profiles/web/source-memory-spaces-v4.sqlite
         run: |
-          pnpm dsh plugin --profile web add ../plugin
-          pnpm dsh --profile web --dump-config > "$RUNNER_TEMP/dump-config-source.yml"
+          node "$DSH_BIN" plugin --profile web add ./plugin
+          node "$DSH_BIN" --profile web --dump-config > "$RUNNER_TEMP/dump-config-source.yml"
           grep -q 'dsh-memory-spaces' "$RUNNER_TEMP/dump-config-source.yml"
-          pnpm dsh --profile web --host 127.0.0.1 --port 3095 > "$RUNNER_TEMP/mount-artifacts/dsh-source.log" 2>&1 &
+          node "$DSH_BIN" --profile web --host 127.0.0.1 --port 3095 > "$RUNNER_TEMP/mount-artifacts/dsh-source.log" 2>&1 &
           SOURCE_PID=$!
           for attempt in $(seq 1 60); do curl --fail --silent http://127.0.0.1:3095/ >/dev/null && break; sleep 1; done
-          node ../plugin/scripts/verify-mounted-web.mjs http://127.0.0.1:3095/ "$RUNNER_TEMP/mount-artifacts/source.png"
+          node plugin/scripts/verify-mounted-web.mjs http://127.0.0.1:3095/ "$RUNNER_TEMP/mount-artifacts/source.png"
           kill "$SOURCE_PID"
           wait "$SOURCE_PID" || true
-          pnpm dsh plugin --profile web remove dsh-memory-spaces
-          pnpm dsh --profile web --dump-config > "$RUNNER_TEMP/dump-config-after-source-remove.yml"
+          node "$DSH_BIN" plugin --profile web remove dsh-memory-spaces
+          node "$DSH_BIN" --profile web --dump-config > "$RUNNER_TEMP/dump-config-after-source-remove.yml"
           ! grep -q 'dsh-memory-spaces' "$RUNNER_TEMP/dump-config-after-source-remove.yml"
       - name: Collect mount evidence
         if: always()

@@ -43,7 +43,7 @@ export class MemoryShareController {
   readonly getSnapshot = (): MemoryShareState => this.state
 
   toggleMessage(session: SelectedSession, message: SelectedMessage): void {
-    const current = { ...(this.state.messages[session.sessionId] ?? {}) }
+    const current = { ...this.state.messages[session.sessionId] }
     if (current[message.seq] === undefined) current[message.seq] = message
     else delete current[message.seq]
     const messages = { ...this.state.messages }

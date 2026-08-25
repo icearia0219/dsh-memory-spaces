@@ -41,7 +41,7 @@ jobs:
       - if: matrix.os == 'ubuntu-latest' && matrix.node == '22.19.0'
         run: mkdir -p package-artifacts && pnpm pack --pack-destination package-artifacts
       - if: matrix.os == 'ubuntu-latest' && matrix.node == '22.19.0'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: dsh-memory-spaces-tarball
           path: package-artifacts/*.tgz
@@ -134,7 +134,7 @@ jobs:
           cp "$RUNNER_TEMP/dump-config-after-source-remove.yml" "$RUNNER_TEMP/mount-artifacts/" 2>/dev/null || true
           find "$DSH_HOME" -maxdepth 3 -name '*.sqlite' -size -10M -exec cp {} "$RUNNER_TEMP/mount-artifacts/" \; 2>/dev/null || true
       - if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: stock-dsh-${{ matrix.dsh }}-mount-evidence
           path: ${{ runner.temp }}/mount-artifacts

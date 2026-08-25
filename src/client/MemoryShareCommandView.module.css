@@ -1,0 +1,1 @@
+.row{display:flex;align-items:center;gap:7px;padding:5px 0;color:var(--dsw-alias-text-tertiary,#747b86);font-size:12px}.dot{width:6px;height:6px;border-radius:50%;background:#8e96a3}.row[data-state=working] .dot{background:#4d7cff}.row[data-state=error] .dot{background:#cf3434}.summary{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}

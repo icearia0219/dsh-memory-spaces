@@ -1,0 +1,149 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: ${{ matrix.os }} / Node ${{ matrix.node }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        node: [22.19.0, 24.x]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - if: matrix.os == 'ubuntu-latest' && matrix.node == '22.19.0'
+        run: pnpm test:migration
+      - if: matrix.os == 'ubuntu-latest' && matrix.node == '22.19.0'
+        run: pnpm test:security
+      - if: matrix.os == 'ubuntu-latest' && matrix.node == '22.19.0'
+        run: pnpm test:coverage
+      - if: matrix.os == 'ubuntu-latest' && matrix.node == '22.19.0'
+        run: pnpm benchmark -- --memories=1000 --spaces=10 --relations=1000 --samples=30
+      - run: pnpm package:check
+      - if: matrix.os == 'ubuntu-latest' && matrix.node == '22.19.0'
+        run: mkdir -p package-artifacts && pnpm pack --pack-destination package-artifacts
+      - if: matrix.os == 'ubuntu-latest' && matrix.node == '22.19.0'
+        uses: actions/upload-artifact@v4
+        with:
+          name: dsh-memory-spaces-tarball
+          path: package-artifacts/*.tgz
+          if-no-files-found: error
+
+  real-mount:
+    name: Stock DSH ${{ matrix.dsh }} install and browser flow
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        dsh: [0.1.0-rc.6, 0.1.0-rc.7]
+    env:
+      DSH_HOME: ${{ runner.temp }}/dsh-memory-home
+      DSH_TELEMETRY_DISABLED: '1'
+    steps:
+      - name: Check out plugin
+        uses: actions/checkout@v4
+        with:
+          path: plugin
+      - name: Check out fixed stock DSH
+        uses: actions/checkout@v4
+        with:
+          repository: deepseek-ai/deepseek-harness
+          ref: dsh-v${{ matrix.dsh }}
+          path: harness
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.22.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.19.0
+          cache: pnpm
+          cache-dependency-path: |
+            plugin/pnpm-lock.yaml
+            harness/pnpm-lock.yaml
+      - name: Install and pack plugin
+        working-directory: plugin
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm exec playwright install --with-deps chromium
+          pnpm pack --pack-destination "$RUNNER_TEMP/plugin-pack"
+      - name: Install stock DSH source
+        working-directory: harness
+        run: pnpm install --frozen-lockfile
+      - name: Install tarball and dump composed config
+        working-directory: harness
+        run: |
+          TARBALL="$(find "$RUNNER_TEMP/plugin-pack" -name '*.tgz' -print -quit)"
+          pnpm dsh plugin --profile web add "$TARBALL"
+          pnpm dsh --profile web --dump-config > "$RUNNER_TEMP/dump-config.yml"
+          grep -q 'dsh-memory-spaces' "$RUNNER_TEMP/dump-config.yml"
+          node ../plugin/scripts/seed-dsh-workspace.mjs "$DSH_HOME" "$RUNNER_TEMP/synthetic-workspace"
+      - name: Start, verify, and repeat mount
+        working-directory: harness
+        run: |
+          mkdir -p "$RUNNER_TEMP/mount-artifacts"
+          pnpm dsh --profile web --host 127.0.0.1 --port 3095 > "$RUNNER_TEMP/mount-artifacts/dsh-first.log" 2>&1 &
+          FIRST_PID=$!
+          for attempt in $(seq 1 60); do curl --fail --silent http://127.0.0.1:3095/ >/dev/null && break; sleep 1; done
+          node ../plugin/scripts/verify-mounted-web.mjs http://127.0.0.1:3095/ "$RUNNER_TEMP/mount-artifacts/first.png" --core
+          kill "$FIRST_PID"
+          wait "$FIRST_PID" || true
+          pnpm dsh --profile web --host 127.0.0.1 --port 3095 > "$RUNNER_TEMP/mount-artifacts/dsh-second.log" 2>&1 &
+          SECOND_PID=$!
+          for attempt in $(seq 1 60); do curl --fail --silent http://127.0.0.1:3095/ >/dev/null && break; sleep 1; done
+          node ../plugin/scripts/verify-mounted-web.mjs http://127.0.0.1:3095/ "$RUNNER_TEMP/mount-artifacts/second.png"
+          kill "$SECOND_PID"
+          wait "$SECOND_PID" || true
+      - name: Uninstall and verify composition
+        working-directory: harness
+        run: |
+          pnpm dsh plugin --profile web remove dsh-memory-spaces
+          pnpm dsh --profile web --dump-config > "$RUNNER_TEMP/dump-config-after-remove.yml"
+          ! grep -q 'dsh-memory-spaces' "$RUNNER_TEMP/dump-config-after-remove.yml"
+      - name: Install linked source and verify mount
+        working-directory: harness
+        env:
+          DSH_MEMORY_SPACES_DATABASE_PATH: ${{ runner.temp }}/dsh-memory-home/profiles/web/source-memory-spaces-v4.sqlite
+        run: |
+          pnpm dsh plugin --profile web add ../plugin
+          pnpm dsh --profile web --dump-config > "$RUNNER_TEMP/dump-config-source.yml"
+          grep -q 'dsh-memory-spaces' "$RUNNER_TEMP/dump-config-source.yml"
+          pnpm dsh --profile web --host 127.0.0.1 --port 3095 > "$RUNNER_TEMP/mount-artifacts/dsh-source.log" 2>&1 &
+          SOURCE_PID=$!
+          for attempt in $(seq 1 60); do curl --fail --silent http://127.0.0.1:3095/ >/dev/null && break; sleep 1; done
+          node ../plugin/scripts/verify-mounted-web.mjs http://127.0.0.1:3095/ "$RUNNER_TEMP/mount-artifacts/source.png"
+          kill "$SOURCE_PID"
+          wait "$SOURCE_PID" || true
+          pnpm dsh plugin --profile web remove dsh-memory-spaces
+          pnpm dsh --profile web --dump-config > "$RUNNER_TEMP/dump-config-after-source-remove.yml"
+          ! grep -q 'dsh-memory-spaces' "$RUNNER_TEMP/dump-config-after-source-remove.yml"
+      - name: Collect mount evidence
+        if: always()
+        run: |
+          cp "$RUNNER_TEMP/dump-config.yml" "$RUNNER_TEMP/mount-artifacts/" 2>/dev/null || true
+          cp "$RUNNER_TEMP/dump-config-after-remove.yml" "$RUNNER_TEMP/mount-artifacts/" 2>/dev/null || true
+          cp "$RUNNER_TEMP/dump-config-source.yml" "$RUNNER_TEMP/mount-artifacts/" 2>/dev/null || true
+          cp "$RUNNER_TEMP/dump-config-after-source-remove.yml" "$RUNNER_TEMP/mount-artifacts/" 2>/dev/null || true
+          find "$DSH_HOME" -maxdepth 3 -name '*.sqlite' -size -10M -exec cp {} "$RUNNER_TEMP/mount-artifacts/" \; 2>/dev/null || true
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stock-dsh-${{ matrix.dsh }}-mount-evidence
+          path: ${{ runner.temp }}/mount-artifacts
+          if-no-files-found: warn

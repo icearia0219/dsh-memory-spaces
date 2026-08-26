@@ -22,4 +22,12 @@ Version 4 does not silently adopt a previous global `$DSH_HOME/memory-spaces-v3.
 
 Stop DSH, preserve the failed database for analysis, replace the complete database/WAL/SHM set with the selected backup, then start one process. Verify schema version, `PRAGMA integrity_check`, FTS counts, space/member counts, version chains, snapshot revocation/use counts, and one synthetic recall flow. Restoration can reintroduce revoked links or deleted/provenance-cleared values that existed at backup time.
 
+## Package upgrade, removal, and rollback
+
+Stop the Web process and complete the backup procedure above before changing the package version. Upgrade by running `dsh plugin --profile web add dsh-memory-spaces@<version>` with the intended exact version, inspect `dsh --profile web --dump-config`, restart Web, and verify a synthetic save-and-recall flow.
+
+`dsh plugin --profile web remove dsh-memory-spaces` removes the package from the Profile configuration but does not delete the profile-local database, its WAL/SHM siblings, or backups. Reinstalling the same version reconnects the retained database. Full data removal is a separate destructive operation: resolve and inspect the exact Profile paths before deleting the complete database set and backups.
+
+For a version rollback, install the earlier exact package version. If the newer version changed the schema, restore the database backup recorded for the target version before starting Web. An older plugin rejects an unknown schema rather than modifying it, so package rollback without the matching data backup is not a database downgrade.
+
 Logical deletion and provenance clearing are application operations, not secure physical erasure. SQLite free pages, WAL, storage media, backups, provider logs, and DSH Session logs can retain related data.

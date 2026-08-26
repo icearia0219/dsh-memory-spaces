@@ -8,10 +8,10 @@
 
 插件不包含团队、组织角色或远程邀请模型。用户直接连接所选本地会话。Bearer 链接仅提供只读会话快照，不会把会话连接到记忆。除非将 Harness Web 服务部署到可访问地址，否则 `127.0.0.1` 链接只能在本机使用。
 
-在现有 Web Profile 中三步安装：
+在现有 Web Profile 中三步安装已发布的包：
 
 ```powershell
-dsh plugin --profile web add github:icearia0219/dsh-memory-spaces
+dsh plugin --profile web add dsh-memory-spaces@0.1.0
 dsh --profile web --dump-config
 dsh web
 ```
@@ -114,7 +114,15 @@ Schema 版本 4 使用独立的来源表和使用者表。放在配置目标路�
 
 本包适配 `>=0.1.0-rc.6 <0.2.0` 范围内的官方原版 DeepSeek Harness 包，并以 rc.7 作为当前开发版本。它只注册已发布的客户端扩展位，不要求 fork 或修改官方仓库。只有安装的 DSH 声明了公开的工作区会话行 leading 与 overlay 扩展位时，侧边栏批量选择器才会显示；没有这些扩展位时仍可使用标题栏的记忆空间流程。
 
-把 GitHub 仓库安装到现有 Web Profile（与上面的三条命令相同）：
+已发布的 npm 包包含预构建产物，是推荐的安装来源。安装明确版本，以便由用户决定何时升级：
+
+```powershell
+dsh plugin --profile web add dsh-memory-spaces@0.1.0
+dsh --profile web --dump-config
+dsh web
+```
+
+只在准备本地构建所选提交时，才直接安装当前 GitHub 源码：
 
 ```powershell
 dsh plugin --profile web add github:icearia0219/dsh-memory-spaces
@@ -122,7 +130,13 @@ dsh --profile web --dump-config
 dsh web
 ```
 
-Git 依赖会执行包内自包含的 `prepare` 构建。如果 pnpm 阻止构建，只在 pnpm 的 `allowBuilds` 配置中批准准确的插件包，重新安装，并在启动前检查生成的 Profile。安装后需重启 Web 进程，使启动 manifest 发布客户端入口。可使用 `dsh plugin --profile web remove dsh-memory-spaces` 移除插件。
+Git 依赖会执行包内自包含的 `prepare` 构建。如果 pnpm 阻止构建，只在 pnpm 的 `allowBuilds` 配置中批准准确的插件包，重新安装，并在启动前检查生成的 Profile。安装后需重启 Web 进程，使启动 manifest 发布客户端入口。
+
+### 升级、移除与回滚
+
+更改已安装的包之前，先停止 Web 进程并备份数据库。再次添加预期的明确版本即可升级；随后运行 `dsh --profile web --dump-config`，重启 Web，并用合成数据完成一次保存与回溯。本插件没有独立的运行时禁用开关：`dsh plugin --profile web remove dsh-memory-spaces` 会禁用插件，但会保留 Profile 内的 SQLite 数据库和备份。
+
+因此，包移除可以撤销：重新安装同一版本即可重新连接已保留的数据库。回滚版本时，安装较早的明确包版本；如果新版本更改了 schema，还要恢复由旧版本创建的数据库备份。旧版本插件遇到未知 schema 会快速失败；只回滚包不等于数据库迁移。完全删除数据是单独的破坏性操作；只能在核对实际 Profile 路径后，才删除 SQLite 数据库、同名 `-wal` 与 `-shm` 文件和所有备份。请查看[备份与恢复](docs/BACKUP_AND_RECOVERY.md)。
 
 独立 checkout 的本地开发方式：
 

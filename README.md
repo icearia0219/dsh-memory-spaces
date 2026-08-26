@@ -8,10 +8,10 @@ English | [中文](README.zh.md)
 
 The plugin has no team, organization-role, or remote-invitation model. Selected local Sessions connect directly. A bearer link is only a read-only conversation snapshot; it never connects a Session to memory. A `127.0.0.1` link remains local unless the Harness Web service is deployed at a reachable address.
 
-Three-step install into an existing Web Profile:
+Three-step install of the published package into an existing Web Profile:
 
 ```powershell
-dsh plugin --profile web add github:icearia0219/dsh-memory-spaces
+dsh plugin --profile web add dsh-memory-spaces@0.1.0
 dsh --profile web --dump-config
 dsh web
 ```
@@ -114,7 +114,15 @@ Schema version 4 stores independent source and consumer tables. A version 3 data
 
 The package targets stock DeepSeek Harness packages in the range `>=0.1.0-rc.6 <0.2.0` and is developed against rc.7. It registers only published client slots and does not require a fork or patch of the official repository. The sidebar batch selector appears only when the installed DSH declares the published Workspace-row leading and overlay slots; the Memory spaces header flow works without them.
 
-Install from the GitHub repository into an existing Web Profile (the same three commands shown above):
+The published npm package is prebuilt and is the recommended install source. Install an exact version so upgrades remain deliberate:
+
+```powershell
+dsh plugin --profile web add dsh-memory-spaces@0.1.0
+dsh --profile web --dump-config
+dsh web
+```
+
+Install the current GitHub source only when you intend to build the selected commit locally:
 
 ```powershell
 dsh plugin --profile web add github:icearia0219/dsh-memory-spaces
@@ -122,7 +130,13 @@ dsh --profile web --dump-config
 dsh web
 ```
 
-Git dependencies run the package's self-contained `prepare` build. If pnpm blocks that build, approve only the exact package in pnpm's `allowBuilds` configuration, reinstall it, and inspect the generated Profile before starting DSH. Restart the Web process after installation so the startup manifest advertises the client entry. Remove it with `dsh plugin --profile web remove dsh-memory-spaces`.
+Git dependencies run the package's self-contained `prepare` build. If pnpm blocks that build, approve only the exact package in pnpm's `allowBuilds` configuration, reinstall it, and inspect the generated Profile before starting DSH. Restart the Web process after installation so the startup manifest advertises the client entry.
+
+### Upgrade, removal, and rollback
+
+Stop the Web process and back up the database before changing the installed package. Upgrade by adding the intended exact version again, run `dsh --profile web --dump-config`, restart Web, and exercise one synthetic save-and-recall flow. There is no separate runtime disable switch: `dsh plugin --profile web remove dsh-memory-spaces` disables the plugin but leaves its profile-local SQLite database and backups in place.
+
+Package removal is therefore reversible: reinstall the same version to reconnect the retained database. For a version rollback, install the earlier exact package version and restore the database backup taken with that version when the newer release changed its schema. An older plugin fails closed on an unknown schema; package rollback alone is not a database migration. Full data removal is a separate destructive action and must include the SQLite database, its `-wal` and `-shm` siblings, and any backups only after their resolved Profile paths have been checked. See [Backup and recovery](docs/BACKUP_AND_RECOVERY.md).
 
 For local development from a standalone checkout:
 

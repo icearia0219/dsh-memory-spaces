@@ -18,6 +18,20 @@ dsh web
 
 Then open a Session, select **Memory spaces**, create a space, explicitly save selected messages, and connect another local Session as a consumer. Inspect or suppress the candidate memories in the composer before sending. See [DSH compatibility](docs/DSH_COMPATIBILITY.md) before installation: stock DSH rc.6 and rc.7 passed local Windows verification and the hosted fresh-Profile tarball, Web, browser-core, source-link, and uninstall matrix. Version 0.1.0 is published on npm.
 
+## Screenshots
+
+The manager keeps memory versions and their retained provenance visible while sources and consumers remain separate relationships.
+
+![Memory-space manager showing an active imported memory version](assets/memory-space-memories.png)
+
+The Consumers tab shows each Session's answer-time mode without granting it contribution rights.
+
+![Memory-space consumer list with independent use modes](assets/memory-space-consumers.png)
+
+History import is an explicit human command, and its generated summary remains visible in the Session transcript.
+
+![Session transcript after an explicit history-summary import](assets/history-import-command.png)
+
 ## Behavior
 
 The Host plugin requires `ctx.agents`, `ctx.commands`, and `ctx.llm`. It opens a schema-versioned SQLite database, maintains an FTS5 trigram index of active memory versions, registers human `/memory` operations plus browser-private governance and snapshot transports, and contributes conditional context at `agent/pre-step`. The client uses published DSH Session-header and composer slots. DSH builds that declare the additive Workspace-row slots also show Session checkboxes and a batch tray for creating a new space; the header dialog remains the fallback. Plugin-owned dialogs provide cross-workspace Session selection, per-message selection, selected-content saving, and a pre-send injection preview without modifying the DSH source tree.

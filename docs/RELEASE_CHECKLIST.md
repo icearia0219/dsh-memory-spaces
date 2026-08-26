@@ -4,7 +4,7 @@
 - `scripts/release-metadata.mjs` accepts the intended tag and extracts non-empty release notes from the matching changelog section.
 - `pnpm install --frozen-lockfile`, lint, typecheck, tests, coverage, build, publint, attw, and pack pass.
 - Migration and security tests pass without ignored branches or real paid models.
-- Tarball inventory contains required Host/client/types/config/docs and no database, WAL/SHM, token, log, `.env`, transcript, coverage, screenshot, cache, bundled React, or bundled DSH runtime.
+- Tarball inventory contains required Host/client/types/config/docs and the declared storefront screenshots, with no database, WAL/SHM, token, log, `.env`, transcript, test screenshot, cache, bundled React, or bundled DSH runtime.
 - Tarball and source installs pass in fresh profiles for every claimed DSH version.
 - `--dump-config`, Web boot, browser E2E, repeated mount, uninstall, and reinstall pass with telemetry disabled.
 - The hosted Ubuntu/Windows/macOS and Node 22/24 matrix passes; authored but unexecuted workflow files are not sufficient.

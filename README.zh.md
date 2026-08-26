@@ -4,19 +4,26 @@
 
 [![CI](https://github.com/icearia0219/dsh-memory-spaces/actions/workflows/ci.yml/badge.svg)](https://github.com/icearia0219/dsh-memory-spaces/actions/workflows/ci.yml) [![npm](https://img.shields.io/npm/v/dsh-memory-spaces)](https://www.npmjs.com/package/dsh-memory-spaces) ![DSH 兼容性：rc.6–rc.7 已验证](https://img.shields.io/badge/DSH-rc.6--rc.7%20verified-brightgreen) [![许可证：MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-`dsh-memory-spaces` 是一个独立的社区 DeepSeek Harness 插件，让用户治理所选会话之间共享的本地记忆。会话默认私有。Web UI 负责创建空间、管理来源与使用关系、选择使用方式、清除来源、设置版本状态、选择导入历史和执行破坏性删除。插件不会向模型暴露这些治理工具，持久命令必须来自当前的人类直接事件。但这项应用层检查不能阻止拥有无限制文件系统权限的模型或进程修改本地数据库。
+**会话默认私有，只有用户明确连接后才共享记忆。**
 
-插件不包含团队、组织角色或远程邀请模型。用户直接连接所选本地会话。Bearer 链接仅提供只读会话快照，不会把会话连接到记忆。除非将 Harness Web 服务部署到可访问地址，否则 `127.0.0.1` 链接只能在本机使用。
+`dsh-memory-spaces` 是一个独立的社区 DeepSeek Harness 插件，让选定会话拥有持久、可检查的记忆，而不是把所有对话合并到一个全局记忆池。用户决定哪些会话可以贡献、哪些会话可以使用，以及每轮回答有哪些记忆进入模型上下文。
 
-在现有 Web Profile 中三步安装已发布的包：
+## 为什么需要记忆空间？
 
-```powershell
-dsh plugin --profile web add dsh-memory-spaces@0.1.0
-dsh --profile web --dump-config
-dsh web
-```
+有用的决策、约束、偏好和项目事实往往停留在最初讨论它们的会话中。手动复制十分重复，而不受限制的全局记忆又可能暴露无关上下文。记忆空间让一组命名的本地会话共享知识，并通过明确连接、可见来源和发送前检查保留用户控制。
 
-然后打开一个会话，选择 **记忆空间**，创建空间，明确保存所选消息，再把另一个本地会话连接为使用者。发送前可在输入框中检查或关闭候选记忆。安装前请查看 [DSH 兼容性](docs/DSH_COMPATIBILITY.md)：官方 DSH rc.6 与 rc.7 已通过 Windows 本地验证，也已通过托管的全新 Profile tarball 安装、Web 挂载、浏览器核心流程、源码链接和卸载矩阵。npm 上已发布 0.1.0 版本。
+## 和单一全局记忆有什么不同？
+
+插件不把记忆简化为自动读写开关，而是让治理过程保持可见，并把贡献与使用分开：
+
+| 原则 | 插件行为 |
+| --- | --- |
+| 默认私有 | 只有用户明确把会话连接为使用者后，该会话才会收到空间记忆。 |
+| 独立关系 | 记忆来源可以贡献所选内容而不使用空间；使用者可以使用记忆而不贡献内容。仅仅建立关系不会复制已有或未来会话。 |
+| 用户治理 | 创建空间、改变关系、处理生命周期、导入历史、清除来源和破坏性删除都需要用户界面操作或人类直接命令；插件不会向模型暴露这些工具。 |
+| 发送前检查 | 自动匹配的记忆仍可在输入框中关闭；确认方式只注入用户主动勾选的候选记忆。 |
+| 可检查记录 | 记忆版本保留生命周期状态和应用层来源，界面会显示哪些会话使用每个空间。 |
+| 本地所有权 | 每个 Web Profile 使用本地 SQLite 数据库；当前版本没有远程邀请或跨实例同步。 |
 
 ## 截图
 
@@ -31,6 +38,44 @@ dsh web
 历史导入必须由用户明确执行，生成的摘要命令事件会留在会话记录中。
 
 ![明确导入历史摘要后的会话记录](assets/history-import-command.png)
+
+<a id="quick-start"></a>
+
+## 快速开始
+
+把已发布的明确版本安装到现有 Web Profile：
+
+```powershell
+dsh plugin --profile web add dsh-memory-spaces@0.1.0
+dsh --profile web --dump-config
+dsh web
+```
+
+打开一个会话，选择 **记忆空间**，创建空间，明确保存所选消息，再把另一个本地会话连接为使用者。发送匹配提示词前，在输入框中检查或关闭候选记忆。
+
+本包适配官方原版 DSH `>=0.1.0-rc.6 <0.2.0`；rc.6 与 rc.7 已通过记录的兼容性矩阵。请阅读 [DSH 兼容性](docs/DSH_COMPATIBILITY.md)了解准确证据；更改现有安装前请查看[兼容性、升级与移除](#compatibility-upgrades-and-removal)。
+
+## 安全性概览
+
+- 关系变更和破坏性治理操作不会作为模型工具暴露；持久命令必须来自当前的人类直接事件。
+- 已存记忆仍是不可信输入。插件会标记注入上下文并允许用户检查候选项，但不能保证抵抗 Prompt Injection。
+- Profile 内的 SQLite 数据库没有加密。拥有无限制文件系统或 Shell 权限的模型、插件或进程可以修改它。
+- 保存所选对话、历史摘要或快照前会显示敏感内容警告，但用户仍需负责凭据保护和提供方保留策略。
+- 逻辑删除和来源清除不是安全物理擦除。升级或执行破坏性操作前请备份数据库。
+
+完整限制请查看[安全与隐私](#security-and-privacy)、[威胁模型](docs/THREAT_MODEL.md)和[安全策略](SECURITY.md)。
+
+## 招募早期测试者（Early Adopters Wanted）
+
+0.1.0 版本需要自动兼容性矩阵之外的真实安装和工作流反馈，尤其希望测试以下场景：
+
+- Windows、macOS 和 Linux；
+- 声明兼容范围内的不同 DSH RC 版本；
+- 中文会话和英文会话；
+- 包含大量记忆的空间；
+- 同一台机器上的多个 DSH Profile。
+
+无论成功与否，都欢迎填写[安装反馈表](https://github.com/icearia0219/dsh-memory-spaces/issues/new?template=installation-feedback.yml)。表单会记录环境、安装方式、UI 显示、空间创建、跨会话注入和已脱敏日志，让兼容性声明建立在可复现的反馈上。
 
 ## 运行行为
 
@@ -124,17 +169,13 @@ Host 插件依赖 `ctx.agents`、`ctx.commands` 和 `ctx.llm`。它打开带版�
 
 Schema 版本 4 使用独立的来源表和使用者表。放在配置目标路径上的版本 3 数据库会先备份，再按以下规则迁移：`read` 变为自动使用；`write` 变为来源；`read_write` 变为两者；`manual_only` 变为来源加发送前确认。新默认值不会静默复用旧的全局 `$DSH_HOME/memory-spaces-v3.sqlite`；需要迁移时请按[备份与恢复](docs/BACKUP_AND_RECOVERY.md)明确移动。其他未知 schema 版本会快速失败且不改变日志模式。
 
-## 兼容性与安装
+<a id="compatibility-upgrades-and-removal"></a>
+
+## 兼容性、升级与移除
 
 本包适配 `>=0.1.0-rc.6 <0.2.0` 范围内的官方原版 DeepSeek Harness 包，并以 rc.7 作为当前开发版本。它只注册已发布的客户端扩展位，不要求 fork 或修改官方仓库。只有安装的 DSH 声明了公开的工作区会话行 leading 与 overlay 扩展位时，侧边栏批量选择器才会显示；没有这些扩展位时仍可使用标题栏的记忆空间流程。
 
-已发布的 npm 包包含预构建产物，是推荐的安装来源。安装明确版本，以便由用户决定何时升级：
-
-```powershell
-dsh plugin --profile web add dsh-memory-spaces@0.1.0
-dsh --profile web --dump-config
-dsh web
-```
+已发布的 npm 包包含预构建产物，是推荐的安装来源。请按[快速开始](#quick-start)安装明确版本，以便由用户决定何时升级。
 
 只在准备本地构建所选提交时，才直接安装当前 GitHub 源码：
 
@@ -166,6 +207,8 @@ dsh web
 ```
 
 源码链接位于所属 Profile 外部，无法安全推断数据应归属哪个 Profile，因此源码链接安装需要明确设置数据库绝对路径；tarball 安装会自动解析 Profile 内路径。构建会生成 Host 使用的 `lib/index.js`、DSH 浏览器模块加载器使用的 `lib/client.cjs` 和 `lib/types` 中的类型声明。破坏性操作前请备份 SQLite 文件。
+
+<a id="security-and-privacy"></a>
 
 ## 安全与隐私
 

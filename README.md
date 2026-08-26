@@ -4,19 +4,26 @@ English | [中文](README.zh.md)
 
 [![CI](https://github.com/icearia0219/dsh-memory-spaces/actions/workflows/ci.yml/badge.svg)](https://github.com/icearia0219/dsh-memory-spaces/actions/workflows/ci.yml) [![npm](https://img.shields.io/npm/v/dsh-memory-spaces)](https://www.npmjs.com/package/dsh-memory-spaces) ![DSH compatibility: rc.6–rc.7 verified](https://img.shields.io/badge/DSH-rc.6--rc.7%20verified-brightgreen) [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-`dsh-memory-spaces` is an independent community plugin for human-governed memory shared across selected DeepSeek Harness Sessions. Sessions are private by default. The Web UI owns space creation, source and consumer relationships, use modes, provenance clearing, version status, optional history import, and destructive deletion. The plugin exposes no model tool for those operations, and durable commands require the current direct human event. This application check does not stop a model or process with unrestricted filesystem access from changing the local database.
+**Private by default. Shared by explicit membership.**
 
-The plugin has no team, organization-role, or remote-invitation model. Selected local Sessions connect directly. A bearer link is only a read-only conversation snapshot; it never connects a Session to memory. A `127.0.0.1` link remains local unless the Harness Web service is deployed at a reachable address.
+`dsh-memory-spaces` is an independent community plugin that gives selected DeepSeek Harness Sessions durable, inspectable memory without turning every conversation into one global pool. You decide which Sessions contribute, which Sessions can use the result, and which memories reach the model on each turn.
 
-Three-step install of the published package into an existing Web Profile:
+## Why memory spaces?
 
-```powershell
-dsh plugin --profile web add dsh-memory-spaces@0.1.0
-dsh --profile web --dump-config
-dsh web
-```
+Useful decisions, constraints, preferences, and project facts often remain trapped in the Session where they were discussed. Copying them by hand is repetitive, while unrestricted global memory can expose unrelated context. A memory space gives a named group of local Sessions a shared knowledge set with explicit membership, visible provenance, and answer-time review.
 
-Then open a Session, select **Memory spaces**, create a space, explicitly save selected messages, and connect another local Session as a consumer. Inspect or suppress the candidate memories in the composer before sending. See [DSH compatibility](docs/DSH_COMPATIBILITY.md) before installation: stock DSH rc.6 and rc.7 passed local Windows verification and the hosted fresh-Profile tarball, Web, browser-core, source-link, and uninstall matrix. Version 0.1.0 is published on npm.
+## What makes it different?
+
+Instead of treating memory as one automatic read/write switch, the plugin keeps governance visible and separates contribution from use:
+
+| Principle | What the plugin does |
+| --- | --- |
+| Private default | A Session receives no space memory until a user explicitly connects it as a consumer. |
+| Independent relationships | A memory source may contribute selected content without consuming the space; a consumer may use memory without contributing. Existing or future conversation is never copied merely because a relationship exists. |
+| Human governance | Space creation, relationship changes, lifecycle decisions, history import, provenance clearing, and destructive deletion require a human UI action or direct human command. The plugin exposes no model tool for them. |
+| Review before send | Automatic matches remain removable in the composer; confirmation mode injects only candidates the user selects. |
+| Inspectable history | Memory versions retain lifecycle state and application-level provenance, and the UI shows which Sessions use each space. |
+| Local ownership | Each Web Profile uses a local SQLite database. This release has no remote invitation or cross-instance synchronization. |
 
 ## Screenshots
 
@@ -31,6 +38,42 @@ The Consumers tab shows each Session's answer-time mode without granting it cont
 History import is an explicit human command, and its generated summary remains visible in the Session transcript.
 
 ![Session transcript after an explicit history-summary import](assets/history-import-command.png)
+
+## Quick start
+
+Install the published package at an exact version into an existing Web Profile:
+
+```powershell
+dsh plugin --profile web add dsh-memory-spaces@0.1.0
+dsh --profile web --dump-config
+dsh web
+```
+
+Open a Session, select **Memory spaces**, create a space, explicitly save selected messages, and connect another local Session as a consumer. Before sending a matching prompt, inspect or suppress the candidate memories in the composer.
+
+The package targets stock DSH `>=0.1.0-rc.6 <0.2.0`; rc.6 and rc.7 have passed the recorded compatibility matrix. Read [DSH compatibility](docs/DSH_COMPATIBILITY.md) for exact evidence and [Compatibility, upgrades, and removal](#compatibility-upgrades-and-removal) before changing an existing installation.
+
+## Safety at a glance
+
+- Relationship changes and destructive governance operations are not exposed as model tools; durable commands must originate from the current direct human event.
+- Stored memory is untrusted input. The plugin labels injected context and lets users review candidates, but it cannot guarantee resistance to prompt injection.
+- The Profile-local SQLite database is unencrypted. A model, plugin, or process with unrestricted filesystem or shell access can change it.
+- Sensitive-content warnings appear before selected dialogue, history summaries, or snapshots are stored, but users remain responsible for secrets and provider retention.
+- Logical deletion and provenance clearing are not secure physical erasure. Back up the database before upgrades or destructive actions.
+
+Read [Security and privacy](#security-and-privacy), the [threat model](docs/THREAT_MODEL.md), and the [security policy](SECURITY.md) for the full limits.
+
+## Early Adopters Wanted
+
+Version 0.1.0 needs real-world installation and workflow reports beyond the automated compatibility matrix. Testing is especially useful for:
+
+- Windows, macOS, and Linux;
+- different DSH release-candidate versions within the declared compatibility range;
+- Chinese and English Sessions;
+- spaces containing large numbers of memories; and
+- multiple DSH Profiles on one machine.
+
+Please use the [installation feedback form](https://github.com/icearia0219/dsh-memory-spaces/issues/new?template=installation-feedback.yml) even when the result is successful. It records the environment, install path, UI result, space creation, cross-Session injection, and sanitized logs so compatibility claims can be based on reproducible reports.
 
 ## Behavior
 
@@ -124,17 +167,11 @@ Memory types are `fact`, `decision`, `constraint`, `preference`, `task`, `artifa
 
 Schema version 4 stores independent source and consumer tables. A version 3 database placed at the configured target path is backed up and migrated as follows: `read` becomes automatic consumption; `write` becomes a source; `read_write` becomes both; `manual_only` becomes a source plus confirmation consumption. The new default does not silently reuse a legacy global `$DSH_HOME/memory-spaces-v3.sqlite`; follow [Backup and recovery](docs/BACKUP_AND_RECOVERY.md) for an explicit move. Other unknown schema versions fail closed without changing the journal mode.
 
-## Compatibility and installation
+## Compatibility, upgrades, and removal
 
 The package targets stock DeepSeek Harness packages in the range `>=0.1.0-rc.6 <0.2.0` and is developed against rc.7. It registers only published client slots and does not require a fork or patch of the official repository. The sidebar batch selector appears only when the installed DSH declares the published Workspace-row leading and overlay slots; the Memory spaces header flow works without them.
 
-The published npm package is prebuilt and is the recommended install source. Install an exact version so upgrades remain deliberate:
-
-```powershell
-dsh plugin --profile web add dsh-memory-spaces@0.1.0
-dsh --profile web --dump-config
-dsh web
-```
+The published npm package is prebuilt and is the recommended install source. Follow [Quick start](#quick-start) and install an exact version so upgrades remain deliberate.
 
 Install the current GitHub source only when you intend to build the selected commit locally:
 

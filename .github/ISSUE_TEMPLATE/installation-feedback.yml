@@ -1,0 +1,101 @@
+name: Installation feedback / 安装反馈
+description: Report a successful or failed dsh-memory-spaces installation and cross-Session workflow. / 反馈安装与跨会话流程结果。
+title: "[Installation feedback]: "
+labels:
+  - compatibility
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for testing dsh-memory-spaces. Successful reports are as useful as failures.
+        感谢测试 dsh-memory-spaces。成功与失败的报告同样有价值。
+
+        Remove API keys, tokens, private conversation content, and filesystem usernames from logs before submitting.
+        提交前请从日志中删除 API Key、token、私人会话内容和文件系统用户名。
+
+  - type: input
+    id: operating-system
+    attributes:
+      label: Operating system / 操作系统
+      description: Include the version and architecture, for example Windows 11 24H2 x64 or macOS 15 arm64. / 请包含版本和架构。
+      placeholder: Windows 11 24H2 x64
+    validations:
+      required: true
+
+  - type: input
+    id: node-version
+    attributes:
+      label: Node.js version / Node 版本
+      description: Paste the output of `node --version`. / 请粘贴 `node --version` 的输出。
+      placeholder: v22.19.0
+    validations:
+      required: true
+
+  - type: input
+    id: dsh-version
+    attributes:
+      label: DSH version / DSH 版本
+      description: Enter the exact DeepSeek Harness package or CLI version. / 请填写准确的 DeepSeek Harness 包或 CLI 版本。
+      placeholder: 0.1.0-rc.7
+    validations:
+      required: true
+
+  - type: input
+    id: plugin-version
+    attributes:
+      label: Plugin version / 插件版本
+      description: Enter the installed dsh-memory-spaces version or Git commit. / 请填写已安装的插件版本或 Git 提交。
+      placeholder: 0.1.0
+    validations:
+      required: true
+
+  - type: input
+    id: installation-method
+    attributes:
+      label: Installation method / 安装方式
+      description: Paste the install command or describe the exact source. / 请粘贴安装命令或说明准确来源。
+      placeholder: dsh plugin --profile web add dsh-memory-spaces@0.1.0
+    validations:
+      required: true
+
+  - type: dropdown
+    id: ui-visible
+    attributes:
+      label: UI visible / UI 是否成功显示
+      options:
+        - Yes / 是
+        - No / 否
+        - Not tested / 未测试
+    validations:
+      required: true
+
+  - type: dropdown
+    id: space-created
+    attributes:
+      label: Space creation / 是否成功创建空间
+      options:
+        - Yes / 是
+        - No / 否
+        - Not tested / 未测试
+    validations:
+      required: true
+
+  - type: dropdown
+    id: cross-session-injection
+    attributes:
+      label: Cross-Session injection / 是否成功跨会话注入
+      options:
+        - Yes / 是
+        - No / 否
+        - Not tested / 未测试
+    validations:
+      required: true
+
+  - type: textarea
+    id: error-logs
+    attributes:
+      label: Error logs / 错误日志
+      description: Paste sanitized logs, or enter `None / 无` when no error occurred. / 请粘贴脱敏日志；没有错误时填写 `None / 无`。
+      render: shell
+    validations:
+      required: true

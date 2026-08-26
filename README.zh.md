@@ -2,7 +2,7 @@
 
 [English](README.md) | 中文
 
-[![CI](https://github.com/icearia0219/dsh-memory-spaces/actions/workflows/ci.yml/badge.svg)](https://github.com/icearia0219/dsh-memory-spaces/actions/workflows/ci.yml) ![npm：尚未发布](https://img.shields.io/badge/npm-not%20published-lightgrey) ![DSH 兼容性：rc.6–rc.7 已完成本地验证](https://img.shields.io/badge/DSH-rc.6--rc.7%20locally%20verified-brightgreen) [![许可证：MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![CI](https://github.com/icearia0219/dsh-memory-spaces/actions/workflows/ci.yml/badge.svg)](https://github.com/icearia0219/dsh-memory-spaces/actions/workflows/ci.yml) [![npm](https://img.shields.io/npm/v/dsh-memory-spaces)](https://www.npmjs.com/package/dsh-memory-spaces) ![DSH 兼容性：rc.6–rc.7 已验证](https://img.shields.io/badge/DSH-rc.6--rc.7%20verified-brightgreen) [![许可证：MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 `dsh-memory-spaces` 是一个独立的社区 DeepSeek Harness 插件，让用户治理所选会话之间共享的本地记忆。会话默认私有。Web UI 负责创建空间、管理来源与使用关系、选择使用方式、清除来源、设置版本状态、选择导入历史和执行破坏性删除。插件不会向模型暴露这些治理工具，持久命令必须来自当前的人类直接事件。但这项应用层检查不能阻止拥有无限制文件系统权限的模型或进程修改本地数据库。
 
@@ -16,7 +16,7 @@ dsh --profile web --dump-config
 dsh web
 ```
 
-然后打开一个会话，选择 **记忆空间**，创建空间，明确保存所选消息，再把另一个本地会话连接为使用者。发送前可在输入框中检查或关闭候选记忆。安装前请查看 [DSH 兼容性](docs/DSH_COMPATIBILITY.md)：官方 DSH rc.6 与 rc.7 已在 Windows 本地完成全新 Profile 的 tarball 安装、Web 挂载、浏览器核心流程、源码链接和卸载验证；托管 CI 与 npm 发布尚未执行。
+然后打开一个会话，选择 **记忆空间**，创建空间，明确保存所选消息，再把另一个本地会话连接为使用者。发送前可在输入框中检查或关闭候选记忆。安装前请查看 [DSH 兼容性](docs/DSH_COMPATIBILITY.md)：官方 DSH rc.6 与 rc.7 已通过 Windows 本地验证，也已通过托管的全新 Profile tarball 安装、Web 挂载、浏览器核心流程、源码链接和卸载矩阵。npm 上已发布 0.1.0 版本。
 
 ## 运行行为
 

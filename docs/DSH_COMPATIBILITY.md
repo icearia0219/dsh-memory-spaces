@@ -1,6 +1,6 @@
 # DSH compatibility
 
-The package peer range is `>=0.1.0-rc.6 <0.2.0`, but a declared peer range is not evidence that every release works. This table records local tests against stock npm artifacts on Windows on 2026-08-25. The authored hosted matrix remains `UNVERIFIED` until it runs in the public repository.
+The package peer range is `>=0.1.0-rc.6 <0.2.0`, but a declared peer range is not evidence that every release works. This table records local tests against stock npm artifacts on Windows on 2026-08-25. The same commit and the `v0.1.0` tag also passed the hosted Ubuntu stock-DSH mount matrix and the Ubuntu, Windows, and macOS package-test matrix.
 
 | DSH version | Contract/build | Fresh tarball | Source link | Dump config | Web mount | Browser core flow | Local status |
 | --- | --- | --- | --- | --- | --- | --- | --- |

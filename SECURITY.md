@@ -2,7 +2,7 @@
 
 ## Supported versions
 
-This repository is preparing its first release. The compatibility range and actual verification evidence are maintained in [DSH compatibility](docs/DSH_COMPATIBILITY.md). Until `0.1.0` is published, source snapshots are not security-supported releases.
+Version `0.1.0` is the currently supported release. The compatibility range and actual verification evidence are maintained in [DSH compatibility](docs/DSH_COMPATIBILITY.md). Unreleased source snapshots receive development testing but are not security-supported releases.
 
 ## Reporting a vulnerability
 

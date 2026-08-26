@@ -2,7 +2,7 @@
 
 English | [中文](README.zh.md)
 
-[![CI](https://github.com/icearia0219/dsh-memory-spaces/actions/workflows/ci.yml/badge.svg)](https://github.com/icearia0219/dsh-memory-spaces/actions/workflows/ci.yml) ![npm: not published](https://img.shields.io/badge/npm-not%20published-lightgrey) ![DSH compatibility: rc.6–rc.7 locally verified](https://img.shields.io/badge/DSH-rc.6--rc.7%20locally%20verified-brightgreen) [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![CI](https://github.com/icearia0219/dsh-memory-spaces/actions/workflows/ci.yml/badge.svg)](https://github.com/icearia0219/dsh-memory-spaces/actions/workflows/ci.yml) [![npm](https://img.shields.io/npm/v/dsh-memory-spaces)](https://www.npmjs.com/package/dsh-memory-spaces) ![DSH compatibility: rc.6–rc.7 verified](https://img.shields.io/badge/DSH-rc.6--rc.7%20verified-brightgreen) [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 `dsh-memory-spaces` is an independent community plugin for human-governed memory shared across selected DeepSeek Harness Sessions. Sessions are private by default. The Web UI owns space creation, source and consumer relationships, use modes, provenance clearing, version status, optional history import, and destructive deletion. The plugin exposes no model tool for those operations, and durable commands require the current direct human event. This application check does not stop a model or process with unrestricted filesystem access from changing the local database.
 
@@ -16,7 +16,7 @@ dsh --profile web --dump-config
 dsh web
 ```
 
-Then open a Session, select **Memory spaces**, create a space, explicitly save selected messages, and connect another local Session as a consumer. Inspect or suppress the candidate memories in the composer before sending. See [DSH compatibility](docs/DSH_COMPATIBILITY.md) before installation: stock DSH rc.6 and rc.7 passed local fresh-Profile tarball, Web, browser-core, source-link, and uninstall checks on Windows; hosted CI and npm publication have not run.
+Then open a Session, select **Memory spaces**, create a space, explicitly save selected messages, and connect another local Session as a consumer. Inspect or suppress the candidate memories in the composer before sending. See [DSH compatibility](docs/DSH_COMPATIBILITY.md) before installation: stock DSH rc.6 and rc.7 passed local Windows verification and the hosted fresh-Profile tarball, Web, browser-core, source-link, and uninstall matrix. Version 0.1.0 is published on npm.
 
 ## Behavior
 

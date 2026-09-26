@@ -4,9 +4,9 @@ Audit date: 2026-09-26. Results in this report come from observed local commands
 
 ## 1. Executive summary
 
-Score: 92/100, grade A-. The source is suitable for a public GitHub repository. The v0.1.1 candidate restores current DSH client compatibility, and the hosted cross-platform and four-version stock-DSH matrix is reused as a tag gate. npm Trusted Publishing remains `UNVERIFIED` until the token-free tagged workflow completes. Open severity count: P0 0, P1 1, P2 2, P3 2.
+Score: 92/100, grade A-. The source is suitable for a public GitHub repository. The v0.1.1 candidate restores current DSH client compatibility, and the hosted cross-platform and two-version supported stock-DSH matrix is reused as a tag gate. npm Trusted Publishing remains `UNVERIFIED` until the token-free tagged workflow completes. Open severity count: P0 0, P1 1, P2 2, P3 2.
 
-The plugin has a coherent independent architecture, direct-human governance, profile-local schema-versioned storage, provenance and version chains, bounded answer-time injection, optional history import, selected-message snapshots, deterministic migration/security tests, legacy rc.6/rc.7 evidence, fresh current npm `latest`/`next` mounts, and an inspected package path. The largest observed product limit is the 20.6-second p95 governance view at 100,000 memories; lexical recall at the same scale remains just inside the 500-millisecond reference target.
+The plugin has a coherent independent architecture, direct-human governance, profile-local schema-versioned storage, provenance and version chains, bounded answer-time injection, optional history import, selected-message snapshots, deterministic migration/security tests, fresh current npm `latest`/`next` mounts, and an inspected package path. Historical rc.6/rc.7 evidence is retained but no longer presented as v0.1.1 support. The largest observed product limit is the 20.6-second p95 governance view at 100,000 memories; lexical recall at the same scale remains just inside the 500-millisecond reference target.
 
 ## 2. Actual environment
 
@@ -44,7 +44,7 @@ The open P1 is the first token-free npm Trusted Publishing run. Version 0.1.0 co
 
 ## 5. README claim audit
 
-[Claim verification](CLAIM_VERIFICATION.md) records 21 material claims: 18 PASS, 2 PARTIAL, 1 UNVERIFIED, and 0 FAIL. The README does not claim encrypted storage, authenticated remote identity, secure physical erasure, semantic conflict detection, embedding recall, or guaranteed prompt-injection prevention. Legacy rc.6/rc.7 evidence and current npm `latest`/`next` candidate evidence are recorded separately; npm Trusted Publishing remains explicitly unverified.
+[Claim verification](CLAIM_VERIFICATION.md) records 20 material claims: 17 PASS, 2 PARTIAL, 1 UNVERIFIED, and 0 FAIL. The README does not claim encrypted storage, authenticated remote identity, secure physical erasure, semantic conflict detection, embedding recall, or guaranteed prompt-injection prevention. Current npm `latest`/`next` evidence and the reason for dropping rc.6/rc.7 support are recorded separately; npm Trusted Publishing remains explicitly unverified.
 
 ## 6. Tests and coverage
 
@@ -52,7 +52,7 @@ The candidate local suite contains 74 passing tests, including three release-met
 
 ## 7. Migration and integrity
 
-The schema 3 fixture contains two spaces, six legacy memberships, four memory/version records including a disputed state, retained source excerpts, one answer usage with response sequence, one snapshot with token hashes, and FTS rows. Migration produces independent source/consumer relationships, preserves the complex state, creates an integrity-valid schema 3 backup, and opens as schema 4 with matching FTS. Tests also cover rollback/recovery, restart persistence, rejection of unknown schema without journal mutation, and simultaneous opens in two Node processes. Fresh rc.6 and rc.7 real profiles report `integrity_check = ok` and zero missing or unexpected FTS rows.
+The schema 3 fixture contains two spaces, six legacy memberships, four memory/version records including a disputed state, retained source excerpts, one answer usage with response sequence, one snapshot with token hashes, and FTS rows. Migration produces independent source/consumer relationships, preserves the complex state, creates an integrity-valid schema 3 backup, and opens as schema 4 with matching FTS. Tests also cover rollback/recovery, restart persistence, rejection of unknown schema without journal mutation, and simultaneous opens in two Node processes. The historical v0.1.0 rc.6/rc.7 profiles reported `integrity_check = ok` and zero missing or unexpected FTS rows.
 
 ## 8. Security and privacy
 
@@ -60,7 +60,7 @@ Automated security evidence covers direct-human origin and replay control, owner
 
 ## 9. Actual DSH verification
 
-The v0.1.0 evidence records complete fresh-Profile tarball and source-link workflows for stock DSH rc.6 and rc.7. For the v0.1.1 candidate, stock npm `0.1.5-rc.3` and `0.1.7-rc.2` each passed a fresh Windows tarball install, `--dump-config`, authenticated real Web boot, and the browser core memory flow with a positive token estimate, per-memory suppression, and deletion cleanup. The release matrix repeats install, second mount, source link, uninstall, and post-uninstall composition for all four exact versions before publication. These stock versions do not expose the optional Workspace-row slots, so sidebar selection retains client-test evidence rather than a stock-mount PASS. No paid model/API key was used, so full external answer generation and history summarization remain P3 and are not claimed as verified.
+For the v0.1.1 candidate, stock npm `0.1.5-rc.3` and `0.1.7-rc.2` each passed a fresh Windows tarball install, `--dump-config`, authenticated real Web boot, and the browser core memory flow with a positive token estimate, per-memory suppression, and deletion cleanup. Both also passed the hosted install, second mount, source link, uninstall, and post-uninstall composition workflow. Fresh rc.6/rc.7 aggregates now fail in the stock DSH HMR startup path before plugin activation and are no longer supported. The supported stock versions do not expose the optional Workspace-row slots, so sidebar selection retains client-test evidence rather than a stock-mount PASS. No paid model/API key was used, so full external answer generation and history summarization remain P3 and are not claimed as verified.
 
 ## 10. Packaging and release
 
@@ -74,6 +74,6 @@ The tag workflow first validates tag/package/changelog agreement, invokes the co
 
 ## 12. Failed commands and remaining limits
 
-Observed failed attempts were retained as audit evidence: the published plugin first remained pending on current DSH's renamed event service; current command dispatch then exposed an added attachments argument; current Session event access and renamed UI primitives caused further browser failures; each failure received a focused regression before both current versions passed. A fresh Windows rc.6 aggregate install reached a stock DSH HMR startup failure before plugin activation, so candidate rc.6 validation remains assigned to the exact Ubuntu release job while the earlier complete rc.6 evidence is retained. Earlier audit attempts also include the intentional source-link path failure, onboarding automation adjustment, batch-limit repair, and the 100,000-memory governance latency failure.
+Observed failed attempts were retained as audit evidence: the published plugin first remained pending on current DSH's renamed event service; current command dispatch then exposed an added attachments argument; current Session event access and renamed UI primitives caused further browser failures; each failure received a focused regression before both current versions passed. Fresh rc.6/rc.7 aggregates then reproduced the same stock DSH HMR startup failure on Windows and Ubuntu before plugin activation, so v0.1.1 removed them from its support claim and release gate. Earlier audit attempts also include the intentional source-link path failure, onboarding automation adjustment, batch-limit repair, and the 100,000-memory governance latency failure.
 
 Known limits: no teams, account identity, remote memory invitation, cross-instance synchronization, embedding retrieval, semantic contradiction detector, storage encryption, secure physical deletion, or prompt-injection guarantee. Snapshot URLs depend on the Web deployment address and bearer secrecy. npm trusted publication, paid-provider output, optional sidebar real-mount coverage, complete accessibility, and 100,000-memory manager responsiveness remain outside the PASS set.

@@ -13,7 +13,7 @@ All notable changes to this project are documented here. The format follows Keep
 
 ### Changed
 
-- Expanded the stock-DSH release matrix to cover `0.1.0-rc.6`, `0.1.0-rc.7`, `0.1.5-rc.3`, and `0.1.7-rc.2`.
+- Replaced the stale rc.6/rc.7 stock-DSH gate with reproducible fresh-install coverage for `0.1.5-rc.3` and `0.1.7-rc.2`.
 - Switched the release workflow from the retired bootstrap secret to npm Trusted Publishing through GitHub OIDC.
 
 ### Migration warning

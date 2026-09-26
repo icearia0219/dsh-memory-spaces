@@ -2,7 +2,7 @@
 
 English | [中文](README.zh.md)
 
-[![CI](https://github.com/icearia0219/dsh-memory-spaces/actions/workflows/ci.yml/badge.svg)](https://github.com/icearia0219/dsh-memory-spaces/actions/workflows/ci.yml) [![npm](https://img.shields.io/npm/v/dsh-memory-spaces)](https://www.npmjs.com/package/dsh-memory-spaces) ![DSH compatibility: four releases verified](https://img.shields.io/badge/DSH-4%20releases%20verified-brightgreen) [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![CI](https://github.com/icearia0219/dsh-memory-spaces/actions/workflows/ci.yml/badge.svg)](https://github.com/icearia0219/dsh-memory-spaces/actions/workflows/ci.yml) [![npm](https://img.shields.io/npm/v/dsh-memory-spaces)](https://www.npmjs.com/package/dsh-memory-spaces) ![DSH compatibility: current releases verified](https://img.shields.io/badge/DSH-current%20releases%20verified-brightgreen) [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 **Private by default. Shared by explicit membership.**
 
@@ -51,7 +51,7 @@ dsh web
 
 Open a Session, select **Memory spaces**, create a space, explicitly save selected messages, and connect another local Session as a consumer. Before sending a matching prompt, inspect or suppress the candidate memories in the composer.
 
-The package targets stock DSH `>=0.1.0-rc.6 <0.2.0`; `0.1.0-rc.6`, `0.1.0-rc.7`, `0.1.5-rc.3`, and `0.1.7-rc.2` have recorded compatibility evidence. Read [DSH compatibility](docs/DSH_COMPATIBILITY.md) for exact evidence and [Compatibility, upgrades, and removal](#compatibility-upgrades-and-removal) before changing an existing installation.
+The package targets stock DSH aggregate releases `>=0.1.5-rc.3 <0.2.0`; `0.1.5-rc.3` and `0.1.7-rc.2` have fresh-install compatibility evidence. Read [DSH compatibility](docs/DSH_COMPATIBILITY.md) for exact evidence and [Compatibility, upgrades, and removal](#compatibility-upgrades-and-removal) before changing an existing installation.
 
 ## Safety at a glance
 
@@ -169,7 +169,7 @@ Schema version 4 stores independent source and consumer tables. A version 3 data
 
 ## Compatibility, upgrades, and removal
 
-The package targets stock DeepSeek Harness packages in the range `>=0.1.0-rc.6 <0.2.0`. Its compatibility layer covers the legacy rc.6/rc.7 client services and the current `0.1.5-rc.3`/`0.1.7-rc.2` APIs. It registers only published client slots and does not require a fork or patch of the official repository. The sidebar batch selector appears only when the installed DSH declares the published Workspace-row leading and overlay slots; the Memory spaces header flow works without them.
+The package supports stock DeepSeek Harness aggregate releases in the range `>=0.1.5-rc.3 <0.2.0` and is verified against `0.1.5-rc.3` and `0.1.7-rc.2`. It registers only published client slots and does not require a fork or patch of the official repository. The sidebar batch selector appears only when the installed DSH declares the published Workspace-row leading and overlay slots; the Memory spaces header flow works without them.
 
 The published npm package is prebuilt and is the recommended install source. Follow [Quick start](#quick-start) and install an exact version so upgrades remain deliberate.
 

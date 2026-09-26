@@ -3,14 +3,14 @@
 import type { ClientRemote, SessionId } from '@deepseek-ai/dsh-api-remotes/client'
 
 type CommandRemoteResult = Awaited<ReturnType<ClientRemote['commands']['execute']>>
-type LegacyCommandExecute = (
+type AttachmentCommandExecute = (
   sessionId: SessionId,
   line: string,
   images: readonly never[],
 ) => Promise<CommandRemoteResult>
 
 /**
- * Execute a command using the rc.7 signature, falling back only when rc.6 rejects that exact arity before dispatch.
+ * Execute a command with the attachment argument, falling back only when rc.7 rejects that exact arity before dispatch.
  * @param remote - public DSH Client Remote assembly.
  * @param sessionId - addressed Session.
  * @param line - complete slash-command line.
@@ -21,17 +21,17 @@ export async function executeCommandCompat(
   sessionId: SessionId,
   line: string,
 ): Promise<CommandRemoteResult> {
+  const executeWithAttachments = remote.commands.execute as unknown as AttachmentCommandExecute
   try {
-    return await remote.commands.execute(sessionId, line)
+    return await executeWithAttachments(sessionId, line, [])
   } catch (error: unknown) {
-    if (!isRcSixCommandArity(error)) throw error
+    if (!isRcSevenCommandArity(error)) throw error
   }
-  const executeLegacy = remote.commands.execute as unknown as LegacyCommandExecute
-  return await executeLegacy(sessionId, line, [])
+  return await remote.commands.execute(sessionId, line)
 }
 
-function isRcSixCommandArity(error: unknown): boolean {
+function isRcSevenCommandArity(error: unknown): boolean {
   return error instanceof Error
-    && /^client api: commands\/execute expected 3 business argument\(s\) plus an optional AbortSignal, got 2$/u
+    && /^client api: commands\/execute expected 2 business argument\(s\) plus an optional AbortSignal, got 3$/u
       .test(error.message)
 }

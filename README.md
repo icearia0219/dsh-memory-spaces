@@ -2,7 +2,7 @@
 
 English | [中文](README.zh.md)
 
-[![CI](https://github.com/icearia0219/dsh-memory-spaces/actions/workflows/ci.yml/badge.svg)](https://github.com/icearia0219/dsh-memory-spaces/actions/workflows/ci.yml) [![npm](https://img.shields.io/npm/v/dsh-memory-spaces)](https://www.npmjs.com/package/dsh-memory-spaces) ![DSH compatibility: rc.6–rc.7 verified](https://img.shields.io/badge/DSH-rc.6--rc.7%20verified-brightgreen) [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![CI](https://github.com/icearia0219/dsh-memory-spaces/actions/workflows/ci.yml/badge.svg)](https://github.com/icearia0219/dsh-memory-spaces/actions/workflows/ci.yml) [![npm](https://img.shields.io/npm/v/dsh-memory-spaces)](https://www.npmjs.com/package/dsh-memory-spaces) ![DSH compatibility: four releases verified](https://img.shields.io/badge/DSH-4%20releases%20verified-brightgreen) [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 **Private by default. Shared by explicit membership.**
 
@@ -44,14 +44,14 @@ History import is an explicit human command, and its generated summary remains v
 Install the published package at an exact version into an existing Web Profile:
 
 ```powershell
-dsh plugin --profile web add dsh-memory-spaces@0.1.0
+dsh plugin --profile web add dsh-memory-spaces@0.1.1
 dsh --profile web --dump-config
 dsh web
 ```
 
 Open a Session, select **Memory spaces**, create a space, explicitly save selected messages, and connect another local Session as a consumer. Before sending a matching prompt, inspect or suppress the candidate memories in the composer.
 
-The package targets stock DSH `>=0.1.0-rc.6 <0.2.0`; rc.6 and rc.7 have passed the recorded compatibility matrix. Read [DSH compatibility](docs/DSH_COMPATIBILITY.md) for exact evidence and [Compatibility, upgrades, and removal](#compatibility-upgrades-and-removal) before changing an existing installation.
+The package targets stock DSH `>=0.1.0-rc.6 <0.2.0`; `0.1.0-rc.6`, `0.1.0-rc.7`, `0.1.5-rc.3`, and `0.1.7-rc.2` have recorded compatibility evidence. Read [DSH compatibility](docs/DSH_COMPATIBILITY.md) for exact evidence and [Compatibility, upgrades, and removal](#compatibility-upgrades-and-removal) before changing an existing installation.
 
 ## Safety at a glance
 
@@ -65,7 +65,7 @@ Read [Security and privacy](#security-and-privacy), the [threat model](docs/THRE
 
 ## Early Adopters Wanted
 
-Version 0.1.0 needs real-world installation and workflow reports beyond the automated compatibility matrix. Testing is especially useful for:
+Version 0.1.1 needs real-world installation and workflow reports beyond the automated compatibility matrix. Testing is especially useful for:
 
 - Windows, macOS, and Linux;
 - different DSH release-candidate versions within the declared compatibility range;
@@ -169,7 +169,7 @@ Schema version 4 stores independent source and consumer tables. A version 3 data
 
 ## Compatibility, upgrades, and removal
 
-The package targets stock DeepSeek Harness packages in the range `>=0.1.0-rc.6 <0.2.0` and is developed against rc.7. It registers only published client slots and does not require a fork or patch of the official repository. The sidebar batch selector appears only when the installed DSH declares the published Workspace-row leading and overlay slots; the Memory spaces header flow works without them.
+The package targets stock DeepSeek Harness packages in the range `>=0.1.0-rc.6 <0.2.0`. Its compatibility layer covers the legacy rc.6/rc.7 client services and the current `0.1.5-rc.3`/`0.1.7-rc.2` APIs. It registers only published client slots and does not require a fork or patch of the official repository. The sidebar batch selector appears only when the installed DSH declares the published Workspace-row leading and overlay slots; the Memory spaces header flow works without them.
 
 The published npm package is prebuilt and is the recommended install source. Follow [Quick start](#quick-start) and install an exact version so upgrades remain deliberate.
 

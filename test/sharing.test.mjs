@@ -47,7 +47,7 @@ test('conversation projection includes only selected visible text', () => {
       content: [{ type: 'text', text: 'Injected memory must not be shared.' }],
     }),
   }
-  const session = { id: 'session', events, surface: { nodes: [0, 1, 2, 3] } }
+  const session = { id: 'session', eventAt: seq => events[seq], surface: { nodes: [0, 1, 2, 3] } }
   const selected = collectConversationShare(session, {
     seqs: [0, 1, 3], includeToolResults: false, maxBytes: 8_192,
   })

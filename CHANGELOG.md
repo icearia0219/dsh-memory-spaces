@@ -2,6 +2,24 @@
 
 All notable changes to this project are documented here. The format follows Keep a Changelog and the project uses Semantic Versioning.
 
+## [0.1.1] - 2026-09-26
+
+### Fixed
+
+- Restored Web-client startup on current DSH releases by supporting both the legacy `conversationEvents` service and the current `uiConversation.events` registry.
+- Adapted command execution and Session event reads to both legacy and current DSH APIs without replaying requests after dispatch.
+- Removed dependencies on DSH UI primitives that were renamed or removed in current releases.
+- Updated the real-mount verifier and CI readiness probe for authenticated DSH Web URLs while redacting bearer query tokens from retained evidence.
+
+### Changed
+
+- Expanded the stock-DSH release matrix to cover `0.1.0-rc.6`, `0.1.0-rc.7`, `0.1.5-rc.3`, and `0.1.7-rc.2`.
+- Switched the release workflow from the retired bootstrap secret to npm Trusted Publishing through GitHub OIDC.
+
+### Migration warning
+
+This release does not change the SQLite schema or migrate stored memory. Stop DSH, back up the Profile database, install `dsh-memory-spaces@0.1.1`, and restart the Web Profile.
+
 ## [0.1.0] - 2026-08-25
 
 ### Added

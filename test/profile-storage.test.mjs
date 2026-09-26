@@ -15,7 +15,7 @@ test('profile database paths remain isolated across installed DSH profiles', (t)
     root,
     'node_modules',
     '.pnpm',
-    'dsh-memory-spaces@0.1.0',
+    'dsh-memory-spaces@0.1.1',
     'node_modules',
     'dsh-memory-spaces',
     'lib',

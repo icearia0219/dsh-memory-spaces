@@ -5,6 +5,7 @@ import type { Session, SurfaceEvent } from '@deepseek-ai/dsh-session'
 import { deriveEventMessage, isSurfaceEvent } from '@deepseek-ai/dsh-session/surface'
 import { retainUtf8Prefix } from './serialization.ts'
 import { HistoryImportError } from './history-import.ts'
+import { readSessionEvent } from './session-events.ts'
 import type { MemorySourceMessage } from './types.ts'
 
 /** One high-confidence sensitive-value category found before sharing. */
@@ -67,7 +68,7 @@ export function collectConversationShare(
   const entries: ShareEntry[] = []
   for (const seq of session.surface.nodes) {
     if (requested !== undefined && !requested.has(seq)) continue
-    const event = session.events[seq]
+    const event = readSessionEvent(session, seq)
     if (event === undefined || !isSurfaceEvent(event)) {
       throw new Error(`memory-spaces: surface node ${seq} does not resolve to a surface event`)
     }

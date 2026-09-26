@@ -1,6 +1,6 @@
 {
   "name": "dsh-memory-spaces",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "packageManager": "pnpm@11.22.0",
   "description": "Explicitly governed shared memory spaces for DeepSeek Harness sessions",
   "author": "付雨嫣",

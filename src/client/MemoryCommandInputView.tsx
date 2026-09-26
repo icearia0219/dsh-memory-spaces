@@ -1,5 +1,4 @@
 import { memo } from 'react'
-import { MessageText } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import type { MemoryCommandInputData } from './memory-command-input.ts'
 import css from './MemoryCommandInputView.module.css'
@@ -22,7 +21,7 @@ export const MemoryCommandInputView = memo(function MemoryCommandInputView({
     >
       <div className={css.stack}>
         <div className={css.bubble}>
-          <MessageText text={data.text} />
+          {data.text}
         </div>
       </div>
     </div>

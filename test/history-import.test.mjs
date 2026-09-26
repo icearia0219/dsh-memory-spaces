@@ -40,7 +40,7 @@ test('history selection excludes recalled context and reasoning while retaining 
       surfaceOp: 'append',
     },
   ]
-  const session = { events, surface: { nodes: [0, 1, 2] } }
+  const session = { eventAt: seq => events[seq], surface: { nodes: [0, 1, 2] } }
 
   const transcript = collectSessionHistory(session, 1_024)
 

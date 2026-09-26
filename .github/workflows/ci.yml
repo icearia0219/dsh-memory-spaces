@@ -53,7 +53,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        dsh: [0.1.0-rc.6, 0.1.0-rc.7]
+        dsh: [0.1.0-rc.6, 0.1.0-rc.7, 0.1.5-rc.3, 0.1.7-rc.2]
     env:
       DSH_TELEMETRY_DISABLED: '1'
     steps:
@@ -91,17 +91,27 @@ jobs:
           node plugin/scripts/seed-dsh-workspace.mjs "$DSH_HOME" "$RUNNER_TEMP/synthetic-workspace"
       - name: Start, verify, and repeat mount
         run: |
+          wait_for_dsh() {
+            local log="$1"
+            DSH_URL=""
+            for attempt in $(seq 1 60); do
+              DSH_URL="$(grep -Eo 'http://127\.0\.0\.1:3095/(\?token=[^[:space:]]+)?' "$log" | tail -n 1 || true)"
+              if [ -n "$DSH_URL" ] && curl --fail --silent "$DSH_URL" >/dev/null; then return 0; fi
+              sleep 1
+            done
+            return 1
+          }
           mkdir -p "$RUNNER_TEMP/mount-artifacts"
-          node "$DSH_BIN" --profile web --host 127.0.0.1 --port 3095 > "$RUNNER_TEMP/mount-artifacts/dsh-first.log" 2>&1 &
+          node "$DSH_BIN" --profile web --no-open --host 127.0.0.1 --port 3095 > "$RUNNER_TEMP/mount-artifacts/dsh-first.log" 2>&1 &
           FIRST_PID=$!
-          for attempt in $(seq 1 60); do curl --fail --silent http://127.0.0.1:3095/ >/dev/null && break; sleep 1; done
-          node plugin/scripts/verify-mounted-web.mjs http://127.0.0.1:3095/ "$RUNNER_TEMP/mount-artifacts/first.png" --core
+          wait_for_dsh "$RUNNER_TEMP/mount-artifacts/dsh-first.log"
+          node plugin/scripts/verify-mounted-web.mjs "$DSH_URL" "$RUNNER_TEMP/mount-artifacts/first.png" --core
           kill "$FIRST_PID"
           wait "$FIRST_PID" || true
-          node "$DSH_BIN" --profile web --host 127.0.0.1 --port 3095 > "$RUNNER_TEMP/mount-artifacts/dsh-second.log" 2>&1 &
+          node "$DSH_BIN" --profile web --no-open --host 127.0.0.1 --port 3095 > "$RUNNER_TEMP/mount-artifacts/dsh-second.log" 2>&1 &
           SECOND_PID=$!
-          for attempt in $(seq 1 60); do curl --fail --silent http://127.0.0.1:3095/ >/dev/null && break; sleep 1; done
-          node plugin/scripts/verify-mounted-web.mjs http://127.0.0.1:3095/ "$RUNNER_TEMP/mount-artifacts/second.png"
+          wait_for_dsh "$RUNNER_TEMP/mount-artifacts/dsh-second.log"
+          node plugin/scripts/verify-mounted-web.mjs "$DSH_URL" "$RUNNER_TEMP/mount-artifacts/second.png"
           kill "$SECOND_PID"
           wait "$SECOND_PID" || true
       - name: Uninstall and verify composition
@@ -113,13 +123,23 @@ jobs:
         env:
           DSH_MEMORY_SPACES_DATABASE_PATH: ${{ runner.temp }}/dsh-memory-home/profiles/web/source-memory-spaces-v4.sqlite
         run: |
+          wait_for_dsh() {
+            local log="$1"
+            DSH_URL=""
+            for attempt in $(seq 1 60); do
+              DSH_URL="$(grep -Eo 'http://127\.0\.0\.1:3095/(\?token=[^[:space:]]+)?' "$log" | tail -n 1 || true)"
+              if [ -n "$DSH_URL" ] && curl --fail --silent "$DSH_URL" >/dev/null; then return 0; fi
+              sleep 1
+            done
+            return 1
+          }
           node "$DSH_BIN" plugin --profile web add ./plugin
           node "$DSH_BIN" --profile web --dump-config > "$RUNNER_TEMP/dump-config-source.yml"
           grep -q 'dsh-memory-spaces' "$RUNNER_TEMP/dump-config-source.yml"
-          node "$DSH_BIN" --profile web --host 127.0.0.1 --port 3095 > "$RUNNER_TEMP/mount-artifacts/dsh-source.log" 2>&1 &
+          node "$DSH_BIN" --profile web --no-open --host 127.0.0.1 --port 3095 > "$RUNNER_TEMP/mount-artifacts/dsh-source.log" 2>&1 &
           SOURCE_PID=$!
-          for attempt in $(seq 1 60); do curl --fail --silent http://127.0.0.1:3095/ >/dev/null && break; sleep 1; done
-          node plugin/scripts/verify-mounted-web.mjs http://127.0.0.1:3095/ "$RUNNER_TEMP/mount-artifacts/source.png"
+          wait_for_dsh "$RUNNER_TEMP/mount-artifacts/dsh-source.log"
+          node plugin/scripts/verify-mounted-web.mjs "$DSH_URL" "$RUNNER_TEMP/mount-artifacts/source.png"
           kill "$SOURCE_PID"
           wait "$SOURCE_PID" || true
           node "$DSH_BIN" plugin --profile web remove dsh-memory-spaces
@@ -128,6 +148,7 @@ jobs:
       - name: Collect mount evidence
         if: always()
         run: |
+          find "$RUNNER_TEMP/mount-artifacts" -name '*.log' -type f -exec sed -E -i 's/(token=)[^&[:space:]]+/\1[REDACTED]/g' {} + 2>/dev/null || true
           cp "$RUNNER_TEMP/dump-config.yml" "$RUNNER_TEMP/mount-artifacts/" 2>/dev/null || true
           cp "$RUNNER_TEMP/dump-config-after-remove.yml" "$RUNNER_TEMP/mount-artifacts/" 2>/dev/null || true
           cp "$RUNNER_TEMP/dump-config-source.yml" "$RUNNER_TEMP/mount-artifacts/" 2>/dev/null || true

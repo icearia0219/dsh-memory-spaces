@@ -5,6 +5,7 @@ import {
   memoryCommandInputDefinition,
   memoryCommandText,
 } from '../src/client/memory-command-input.ts'
+import { ConversationEventRegistryBridge } from '../src/client/conversation-events.ts'
 import { MEMORY_SPACES_CLIENT_INJECT } from '../src/client/dependencies.ts'
 import { executeCommandCompat } from '../src/client/execute-command.ts'
 import { connectSelectedSessions } from '../src/client/session-connection.ts'
@@ -47,31 +48,77 @@ test('memory sharing waits for the commands Remote namespace', () => {
   assert.deepEqual(MEMORY_SPACES_CLIENT_INJECT, [
     'slots',
     'locale',
-    'conversationEvents',
     'remote',
     'remote.commands',
   ])
 })
 
-test('command transport supports rc.6 without replaying non-arity failures', async () => {
+test('conversation event registration prefers uiConversation and falls back to the legacy service', () => {
+  const definition = { kind: 'memory-command-input' }
   const calls = []
-  const legacyRemote = {
+  const registry = (name) => ({
+    register: (value) => {
+      assert.equal(value, definition)
+      calls.push(`register:${name}`)
+      let disposed = false
+      return () => {
+        if (disposed) return
+        disposed = true
+        calls.push(`dispose:${name}`)
+      }
+    },
+  })
+  const bridge = new ConversationEventRegistryBridge(definition)
+
+  const detachLegacy = bridge.attach('conversationEvents', registry('legacy'))
+  const detachModern = bridge.attach('uiConversation', registry('modern'))
+  detachModern()
+  detachLegacy()
+
+  assert.deepEqual(calls, [
+    'register:legacy',
+    'dispose:legacy',
+    'register:modern',
+    'dispose:modern',
+    'register:legacy',
+    'dispose:legacy',
+  ])
+})
+
+test('command transport supports attachment-aware DSH and rc.7 without replaying non-arity failures', async () => {
+  const attachmentCalls = []
+  const attachmentRemote = {
     commands: {
       execute: async (...args) => {
-        calls.push(args)
-        if (args.length === 2) {
-          throw new Error('client api: commands/execute expected 3 business argument(s) plus an optional AbortSignal, got 2')
+        attachmentCalls.push(args)
+        return { ok: true, value: undefined }
+      },
+    },
+  }
+  assert.deepEqual(await executeCommandCompat(attachmentRemote, 'session', '/memory list'), {
+    ok: true,
+    value: undefined,
+  })
+  assert.deepEqual(attachmentCalls.map(args => args.length), [3])
+  assert.deepEqual(attachmentCalls[0][2], [])
+
+  const rcSevenCalls = []
+  const rcSevenRemote = {
+    commands: {
+      execute: async (...args) => {
+        rcSevenCalls.push(args)
+        if (args.length === 3) {
+          throw new Error('client api: commands/execute expected 2 business argument(s) plus an optional AbortSignal, got 3')
         }
         return { ok: true, value: undefined }
       },
     },
   }
-  assert.deepEqual(await executeCommandCompat(legacyRemote, 'session', '/memory list'), {
+  assert.deepEqual(await executeCommandCompat(rcSevenRemote, 'session', '/memory list'), {
     ok: true,
     value: undefined,
   })
-  assert.deepEqual(calls.map(args => args.length), [2, 3])
-  assert.deepEqual(calls[1][2], [])
+  assert.deepEqual(rcSevenCalls.map(args => args.length), [3, 2])
 
   let attempts = 0
   const failingRemote = {
@@ -102,6 +149,23 @@ test('the client uses only published stock DSH slots', async () => {
     'conversation.chat.commandview',
   ])
   assert.doesNotMatch(source, /name: 'sidebar\.workspaces'|conversation\.chat\.(?:user|assistant)-actions/u)
+})
+
+test('the client does not depend on DSH primitives removed by current next', async () => {
+  const commandInput = await readFile(
+    new URL('../src/client/MemoryCommandInputView.tsx', import.meta.url),
+    'utf8',
+  )
+  const shareUi = await readFile(new URL('../src/client/MemoryShareUi.tsx', import.meta.url), 'utf8')
+  assert.doesNotMatch(commandInput, /\bMessageText\b/u)
+  const primitiveImport = shareUi.match(
+    /import\s*\{(?<members>[\s\S]*?)\}\s*from '@deepseek-ai\/dsh-client-ui-primitives'/u,
+  )
+  assert.notEqual(primitiveImport, null)
+  assert.doesNotMatch(
+    primitiveImport.groups.members,
+    /Icon(?:Check|Copy|Link|Share|Warning)Outline(?:14|16)/u,
+  )
 })
 
 test('sidebar selection seeds a new-space flow with the first selected session as owner', () => {

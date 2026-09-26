@@ -12,5 +12,5 @@
 - Primary UI flows pass a dedicated keyboard, screen-reader, contrast, and automated accessibility review before any conformance claim.
 - Compatibility, claim-verification, quality-audit, README, security, and backup documents match current evidence.
 - npm trusted publishing is configured for the exact GitHub repository, workflow, and `npm` environment; the release uses OIDC provenance without a long-lived plaintext token.
-- The version 0.1.0 bootstrap publish is complete. Remove `NPM_BOOTSTRAP_TOKEN`, configure the trusted publisher for `icearia0219/dsh-memory-spaces`, `release.yml`, environment `npm`, and `npm publish`, then verify the OIDC-only path on the next tag.
+- The version 0.1.0 bootstrap publish is complete. Version 0.1.1 has no token fallback; confirm npm trusts `icearia0219/dsh-memory-spaces`, `release.yml`, and the `npm` environment before tagging, then verify the OIDC-only publication result.
 - GitHub Release notes use the matching changelog section and state migration risk.

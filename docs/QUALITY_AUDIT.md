@@ -1,17 +1,17 @@
 # Quality audit
 
-Audit date: 2026-08-25. Results in this report come from observed local commands. Authored workflows, unexecuted releases, and provider-dependent scenarios are not marked PASS.
+Audit date: 2026-09-26. Results in this report come from observed local commands or identified historical workflow runs. Authored workflows, unexecuted releases, and provider-dependent scenarios are not marked PASS.
 
 ## 1. Executive summary
 
-Score: 92/100, grade A-. The source is suitable for a public GitHub repository. The hosted cross-platform and stock-DSH matrix passes on `main` and is reused as a tag gate. An npm release remains conditional on the one-time first-version bootstrap, subsequent trusted-publisher configuration, and the tagged provenance workflow completing. Open severity count: P0 0, P1 1, P2 2, P3 2.
+Score: 92/100, grade A-. The source is suitable for a public GitHub repository. The v0.1.1 candidate restores current DSH client compatibility, and the hosted cross-platform and four-version stock-DSH matrix is reused as a tag gate. npm Trusted Publishing remains `UNVERIFIED` until the token-free tagged workflow completes. Open severity count: P0 0, P1 1, P2 2, P3 2.
 
-The plugin has a coherent independent architecture, direct-human governance, profile-local schema-versioned storage, provenance and version chains, bounded answer-time injection, optional history import, selected-message snapshots, deterministic migration/security tests, stock DSH rc.6/rc.7 local mount evidence, and an inspected package path. The largest observed product limit is the 20.6-second p95 governance view at 100,000 memories; lexical recall at the same scale remains just inside the 500-millisecond reference target.
+The plugin has a coherent independent architecture, direct-human governance, profile-local schema-versioned storage, provenance and version chains, bounded answer-time injection, optional history import, selected-message snapshots, deterministic migration/security tests, legacy rc.6/rc.7 evidence, fresh current npm `latest`/`next` mounts, and an inspected package path. The largest observed product limit is the 20.6-second p95 governance view at 100,000 memories; lexical recall at the same scale remains just inside the 500-millisecond reference target.
 
 ## 2. Actual environment
 
-- Windows x64, PowerShell, Node.js 22.19.0, pnpm 11.22.0, TypeScript 6.0.3.
-- Development peers: exact DSH `0.1.0-rc.7`; real mount artifacts: stock npm DSH `0.1.0-rc.6` and `0.1.0-rc.7`.
+- Windows x64, PowerShell, Node.js 24.15.0, pnpm 11.22.0, TypeScript 6.0.3.
+- Development peers: exact legacy DSH `0.1.0-rc.7`; new real mount artifacts: stock npm DSH `0.1.5-rc.3` and `0.1.7-rc.2`; historical exact mounts: `0.1.0-rc.6` and `0.1.0-rc.7`.
 - SQLite: Node's experimental `node:sqlite` with FTS5 trigram support.
 - Browser: Playwright Chromium 1.62.1 against real stock DSH Web profiles.
 
@@ -32,22 +32,23 @@ The standalone package emits an ESM Host entry, a CJS browser entry required by 
 | F07 | P1 | Preview decisions and pending usage could be reused or misreported | A later turn could receive stale choices; a non-answer could appear used | Query-bound ten-minute choices are consumed once; usage attaches only to a durable answer event | plugin and database usage tests | Resolved |
 | F08 | P1 | Expiry, version lifecycle, and FTS could drift | Inactive data might enter recall | Lifecycle changes are transactional and FTS indexes active effective versions only | lifecycle, recall, and FTS integrity tests | Resolved |
 | F09 | P1 | Browser bundle used a `.js` CommonJS entry under `type: module` | Strict package consumers rejected the tarball | Publish `lib/client.cjs` with matching declarations | publint, attw, real Web mount | Resolved |
-| F10 | P1 | DSH rc.6 and rc.7 command transports use different arity | rc.6 rejected browser governance before dispatch | Retry only the exact rc.6 pre-dispatch arity error with the legacy empty-images argument | client adapter tests and rc.6 browser core flow | Resolved |
+| F10 | P1 | DSH command transports use different business-argument counts | Attachment-aware releases and rc.7 could not share one direct call | Try the attachment-aware form first and fall back only for the exact rc.7 pre-dispatch argument-count error | client adapter tests and real browser core flows | Resolved |
 | F11 | P2 | Governance limit was applied once per space | Many spaces could return far beyond the requested memory cap | Enforce one global remaining-memory cap across visible spaces | database regression test | Resolved |
 | F12 | P2 | Browser selection allowed 1,000 Sessions while the Host capped 500 | A valid UI batch failed at execution | Align source/consumer batch limit at 1,000 | 1,000-source batch-removal test and benchmark | Resolved |
 | F13 | P2 | Browser automation lacked stable semantics and dynamic failures lacked alerts | Regressions and assistive technology could miss state | Added semantic test hooks, alert roles, and Session-keyed governance state | client tests and real browser core flow | Resolved |
 | F14 | P2 | Governance aggregation is too slow at 100,000 memories | Measured p95 is 20,586.53 ms | No release-blocking correctness fix; add pagination or aggregate-specific queries in a later release | `scripts/benchmark.mjs` | Open |
 | F15 | P2 | Accessibility has no complete keyboard, screen-reader, contrast, or automated audit | Primary browser interaction does not prove full accessibility | Keep claim `PARTIAL`; require a dedicated audit before claiming conformance | claim C16 | Open |
+| F16 | P0 | Current DSH renamed the conversation-event service, Session event access, command arguments, and UI primitives | The published v0.1.0 package could remain pending at boot or crash after the Web client loaded | Added explicit old/current service and Session adapters, a pre-dispatch-only command fallback, and plugin-owned icons and command text | client adapter tests plus `0.1.5-rc.3` and `0.1.7-rc.2` browser core flows | Resolved |
 
-The open P1 is first-version npm publication: npm requires the package to exist before its trusted publisher can be configured. The release workflow supports a short-lived `NPM_BOOTSTRAP_TOKEN` for that one publish; the secret must then be deleted and replaced by the repository/workflow/environment trust relationship. The remaining P3 items are the lack of a paid-provider end-to-end history-summary/model-answer run and the accepted use of lexical retrieval without semantic conflict detection. Both are documented product limits rather than hidden correctness claims.
+The open P1 is the first token-free npm Trusted Publishing run. Version 0.1.0 completed the bootstrap publish; the v0.1.1 workflow now relies only on the repository, workflow, environment, and OIDC trust relationship. The remaining P3 items are the lack of a paid-provider end-to-end history-summary/model-answer run and the accepted use of lexical retrieval without semantic conflict detection. Both are documented product limits rather than hidden correctness claims.
 
 ## 5. README claim audit
 
-[Claim verification](CLAIM_VERIFICATION.md) records 20 material claims: 17 PASS, 2 PARTIAL, 1 UNVERIFIED, and 0 FAIL. The README does not claim encrypted storage, authenticated remote identity, secure physical erasure, semantic conflict detection, embedding recall, or guaranteed prompt-injection prevention. Stock rc.6/rc.7 compatibility is locally and publicly verified; npm publication remains explicitly unverified.
+[Claim verification](CLAIM_VERIFICATION.md) records 21 material claims: 18 PASS, 2 PARTIAL, 1 UNVERIFIED, and 0 FAIL. The README does not claim encrypted storage, authenticated remote identity, secure physical erasure, semantic conflict detection, embedding recall, or guaranteed prompt-injection prevention. Legacy rc.6/rc.7 evidence and current npm `latest`/`next` candidate evidence are recorded separately; npm Trusted Publishing remains explicitly unverified.
 
 ## 6. Tests and coverage
 
-The final local suite contains 68 passing tests, including three release-metadata tests. Focused migration and security suites pass. Coverage from `coverage/coverage-summary.json`: statements 96.81% (3,623/3,742), lines 96.81% (3,623/3,742), functions 98.90% (181/183), and branches 83.31% (709/851). The database module has 98.15% lines and 90.19% branches. Configured global gates are 95% statements/lines/functions and 80% branches.
+The candidate local suite contains 74 passing tests, including three release-metadata tests and executable legacy/current adapters. Focused migration and security suites pass. Coverage is 96.82% statements and lines (3,659/3,779), 98.91% functions (183/185), and 83.19% branches (713/857). The configured gates are 95% statements/lines/functions and 80% branches.
 
 ## 7. Migration and integrity
 
@@ -59,13 +60,13 @@ Automated security evidence covers direct-human origin and replay control, owner
 
 ## 9. Actual DSH verification
 
-Stock DSH rc.6 and rc.7 each passed a fresh-Profile tarball install, `--dump-config`, real Web boot, browser core memory flow, positive preview token estimate, per-memory suppression, second mount, FTS integrity, uninstall, and post-uninstall dump. Both versions also passed source-link installation, mount with an explicit Profile database path, and uninstall. The public GitHub Actions jobs repeat these flows. Stock rc.6/rc.7 do not expose the optional Workspace-row slots, so the sidebar flow has client-test evidence but is not part of the stock mount PASS. The rc.6 compatibility test first exposed the command-arity difference and passed after the narrow adapter repair. No paid model/API key was used, so the full external answer-generation and history-summary route remains P3 and is not claimed as verified.
+The v0.1.0 evidence records complete fresh-Profile tarball and source-link workflows for stock DSH rc.6 and rc.7. For the v0.1.1 candidate, stock npm `0.1.5-rc.3` and `0.1.7-rc.2` each passed a fresh Windows tarball install, `--dump-config`, authenticated real Web boot, and the browser core memory flow with a positive token estimate, per-memory suppression, and deletion cleanup. The release matrix repeats install, second mount, source link, uninstall, and post-uninstall composition for all four exact versions before publication. These stock versions do not expose the optional Workspace-row slots, so sidebar selection retains client-test evidence rather than a stock-mount PASS. No paid model/API key was used, so full external answer generation and history summarization remain P3 and are not claimed as verified.
 
 ## 10. Packaging and release
 
 Strict package validation uses build, publint, attw, `npm pack --dry-run --json`, a real `pnpm pack`, and an allowlist-style tarball inspection. The release artifact must contain Host/client/types/config/docs and must not contain SQLite/WAL/SHM files, tokens, logs, `.env`, transcripts, tests, coverage, screenshots, caches, source, `node_modules`, or bundled DSH/React runtimes. The exact final tarball path, byte size, file count, and SHA-256 are recorded after the last package gate rather than embedded here because this report is itself inside the tarball. No upload or npm publish has occurred.
 
-The tag workflow first validates tag/package/changelog agreement, invokes the complete reusable CI and stock-mount matrix, publishes with an npm CLI that supports Trusted Publishing, and creates GitHub Release notes from the matching changelog section. It remains `UNVERIFIED` until the first package version is bootstrapped, npm trusts `icearia0219/dsh-memory-spaces` and `release.yml` for the `npm` environment, the temporary bootstrap secret is removed, and a tag completes successfully.
+The tag workflow first validates tag/package/changelog agreement, invokes the complete reusable CI and stock-mount matrix, publishes with an npm CLI that supports Trusted Publishing, and creates GitHub Release notes from the matching changelog section. Version 0.1.0 completed the bootstrap publish. The v0.1.1 workflow contains no token fallback and remains `UNVERIFIED` until npm trusts `icearia0219/dsh-memory-spaces` and `release.yml` for the `npm` environment and the tag completes successfully.
 
 ## 11. Performance
 
@@ -73,6 +74,6 @@ The tag workflow first validates tag/package/changelog agreement, invokes the co
 
 ## 12. Failed commands and remaining limits
 
-Observed failed attempts were retained as audit evidence: local `rg.exe` was denied and read-only discovery used PowerShell; npm's machine-level cache was not writable and package checks used a fresh temporary cache; Playwright initially lacked Chromium and passed after official browser installation; rc.6 initially rejected the rc.7 command arity and passed after the compatibility adapter; a source link without an explicit database path failed intentionally and then passed with the documented path; rc.7 browser automation initially stopped at onboarding and passed after handling the stock dialog; the benchmark first hit a 500/1,000 batch mismatch and passed after aligning the limit; the 100,000-memory run with 20 governance samples was interrupted after excessive runtime and was rerun with five samples, which confirmed the P2 latency failure; the installed desktop `dsh` was stale, so exact official npm rc.6/rc.7 artifacts were used.
+Observed failed attempts were retained as audit evidence: the published plugin first remained pending on current DSH's renamed event service; current command dispatch then exposed an added attachments argument; current Session event access and renamed UI primitives caused further browser failures; each failure received a focused regression before both current versions passed. A fresh Windows rc.6 aggregate install reached a stock DSH HMR startup failure before plugin activation, so candidate rc.6 validation remains assigned to the exact Ubuntu release job while the earlier complete rc.6 evidence is retained. Earlier audit attempts also include the intentional source-link path failure, onboarding automation adjustment, batch-limit repair, and the 100,000-memory governance latency failure.
 
 Known limits: no teams, account identity, remote memory invitation, cross-instance synchronization, embedding retrieval, semantic contradiction detector, storage encryption, secure physical deletion, or prompt-injection guarantee. Snapshot URLs depend on the Web deployment address and bearer secrecy. npm trusted publication, paid-provider output, optional sidebar real-mount coverage, complete accessibility, and 100,000-memory manager responsiveness remain outside the PASS set.

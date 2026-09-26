@@ -5,8 +5,7 @@ import type { ClientRemote, SessionId } from '@deepseek-ai/dsh-api-remotes/clien
 import type { PropsRuntime, InjectFace } from '@deepseek-ai/dsh-client-ui-slots'
 import type { ConversationNode } from '@deepseek-ai/dsh-client-runtime/client'
 import {
-  Button, IconCheckOutline14, IconCopyOutline16, IconLinkOutline16, IconShareOutline16,
-  IconWarningOutline16, Input, Modal, writeClipboard,
+  Button, Input, Modal, writeClipboard,
 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type {
   LeaveDisposition, MemoryGovernanceState, MemoryInjectionPreview, MemoryStatus, MemoryType,
@@ -16,6 +15,10 @@ import { executeMemoryUi, MemoryUiRequestError } from './memory-ui-client.ts'
 import { executeShare, randomBearerToken, ShareRequestError } from './share-client.ts'
 import { connectSelectedSessions } from './session-connection.ts'
 import { MemoryShareController, type SelectedSession } from './share-controller.ts'
+import {
+  IconCheckOutline14, IconCopyOutline16, IconLinkOutline16, IconShareOutline16,
+  IconWarningOutline16,
+} from './icons.tsx'
 import css from './MemoryShareUi.module.css'
 
 interface MemoryWorkspaceSessionOwnerProps {

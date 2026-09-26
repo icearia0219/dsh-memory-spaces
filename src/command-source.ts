@@ -1,6 +1,7 @@
 /** Durable command-origin checks shared by public and browser-only command handlers. */
 
 import type { CommandInvocation } from '@deepseek-ai/dsh-commands'
+import { snapshotSessionEvents } from './session-events.ts'
 
 const MAX_REPLAY_RESULTS = 2_048
 
@@ -44,7 +45,7 @@ export class CommandReplayGuard {
  * @returns the durable event sequence, or `undefined` for missing or non-user origins.
  */
 export function directUserCommandSeq(invocation: CommandInvocation): number | undefined {
-  const event = invocation.agent.session.events.findLast(candidate => (
+  const event = snapshotSessionEvents(invocation.agent.session).findLast(candidate => (
     candidate.type === 'command/run'
     && candidate.data.commandId === invocation.commandId
   ))

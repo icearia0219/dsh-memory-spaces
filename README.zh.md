@@ -2,7 +2,7 @@
 
 [English](README.md) | 中文
 
-[![CI](https://github.com/icearia0219/dsh-memory-spaces/actions/workflows/ci.yml/badge.svg)](https://github.com/icearia0219/dsh-memory-spaces/actions/workflows/ci.yml) [![npm](https://img.shields.io/npm/v/dsh-memory-spaces)](https://www.npmjs.com/package/dsh-memory-spaces) ![DSH 兼容性：rc.6–rc.7 已验证](https://img.shields.io/badge/DSH-rc.6--rc.7%20verified-brightgreen) [![许可证：MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![CI](https://github.com/icearia0219/dsh-memory-spaces/actions/workflows/ci.yml/badge.svg)](https://github.com/icearia0219/dsh-memory-spaces/actions/workflows/ci.yml) [![npm](https://img.shields.io/npm/v/dsh-memory-spaces)](https://www.npmjs.com/package/dsh-memory-spaces) ![DSH 兼容性：四个版本已验证](https://img.shields.io/badge/DSH-4%20releases%20verified-brightgreen) [![许可证：MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 **会话默认私有，只有用户明确连接后才共享记忆。**
 
@@ -46,14 +46,14 @@
 把已发布的明确版本安装到现有 Web Profile：
 
 ```powershell
-dsh plugin --profile web add dsh-memory-spaces@0.1.0
+dsh plugin --profile web add dsh-memory-spaces@0.1.1
 dsh --profile web --dump-config
 dsh web
 ```
 
 打开一个会话，选择 **记忆空间**，创建空间，明确保存所选消息，再把另一个本地会话连接为使用者。发送匹配提示词前，在输入框中检查或关闭候选记忆。
 
-本包适配官方原版 DSH `>=0.1.0-rc.6 <0.2.0`；rc.6 与 rc.7 已通过记录的兼容性矩阵。请阅读 [DSH 兼容性](docs/DSH_COMPATIBILITY.md)了解准确证据；更改现有安装前请查看[兼容性、升级与移除](#compatibility-upgrades-and-removal)。
+本包适配官方原版 DSH `>=0.1.0-rc.6 <0.2.0`；`0.1.0-rc.6`、`0.1.0-rc.7`、`0.1.5-rc.3` 与 `0.1.7-rc.2` 都有兼容性验证记录。请阅读 [DSH 兼容性](docs/DSH_COMPATIBILITY.md)了解准确证据；更改现有安装前请查看[兼容性、升级与移除](#compatibility-upgrades-and-removal)。
 
 ## 安全性概览
 
@@ -67,7 +67,7 @@ dsh web
 
 ## 招募早期测试者（Early Adopters Wanted）
 
-0.1.0 版本需要自动兼容性矩阵之外的真实安装和工作流反馈，尤其希望测试以下场景：
+0.1.1 版本需要自动兼容性矩阵之外的真实安装和工作流反馈，尤其希望测试以下场景：
 
 - Windows、macOS 和 Linux；
 - 声明兼容范围内的不同 DSH RC 版本；
@@ -173,7 +173,7 @@ Schema 版本 4 使用独立的来源表和使用者表。放在配置目标路�
 
 ## 兼容性、升级与移除
 
-本包适配 `>=0.1.0-rc.6 <0.2.0` 范围内的官方原版 DeepSeek Harness 包，并以 rc.7 作为当前开发版本。它只注册已发布的客户端扩展位，不要求 fork 或修改官方仓库。只有安装的 DSH 声明了公开的工作区会话行 leading 与 overlay 扩展位时，侧边栏批量选择器才会显示；没有这些扩展位时仍可使用标题栏的记忆空间流程。
+本包适配 `>=0.1.0-rc.6 <0.2.0` 范围内的官方原版 DeepSeek Harness 包。兼容层同时处理旧版 rc.6/rc.7 客户端服务和当前 `0.1.5-rc.3`/`0.1.7-rc.2` API。它只注册已发布的客户端扩展位，不要求 fork 或修改官方仓库。只有安装的 DSH 声明了公开的工作区会话行 leading 与 overlay 扩展位时，侧边栏批量选择器才会显示；没有这些扩展位时仍可使用标题栏的记忆空间流程。
 
 已发布的 npm 包包含预构建产物，是推荐的安装来源。请按[快速开始](#quick-start)安装明确版本，以便由用户决定何时升级。
 

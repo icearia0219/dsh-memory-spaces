@@ -14,8 +14,8 @@ await mkdir(dirname(screenshotPath), { recursive: true })
 
 const browser = await chromium.launch({ headless: true })
 const page = await browser.newPage()
+const browserErrors = []
 try {
-  const browserErrors = []
   page.on('pageerror', error => browserErrors.push(error.message))
   page.on('console', message => {
     if (message.type() === 'error') browserErrors.push(message.text())
@@ -31,10 +31,12 @@ try {
   const bundleStatus = await page.evaluate(async path => (await fetch(path)).status, entry.url)
   assert.equal(bundleStatus, 200, 'memory-spaces client bundle was not served')
   await page.waitForFunction(() => !document.body.innerText.includes('Loading plugins'), undefined, { timeout: 30_000 })
+  assert.doesNotMatch(await page.locator('body').innerText(), /Failed to load plugins/iu, 'DSH Web reported a plugin boot failure')
   await dismissKnownOnboarding(page)
   if (verifyCoreFlow) {
     await page.getByRole('button', { name: /^(新建会话|New session|New conversation)$/u }).last().click()
-    const composer = page.locator('textarea').last()
+    await dismissKnownOnboarding(page)
+    const composer = page.locator('textarea, [contenteditable="true"]').filter({ visible: true }).last()
     await composer.waitFor({ state: 'visible', timeout: 30_000 })
     await composer.fill('/memory list')
     await composer.press('Enter')
@@ -116,9 +118,12 @@ try {
     [],
     `browser reported plugin errors: ${browserErrors.join('\n')}`,
   )
-  process.stdout.write(`${JSON.stringify({ url, clientEntry: entry.id, bundleStatus, bodyReady: true, coreFlow: verifyCoreFlow, sidebarFlow })}\n`)
+  const reportedUrl = new URL(url)
+  reportedUrl.search = ''
+  process.stdout.write(`${JSON.stringify({ url: reportedUrl.href, clientEntry: entry.id, bundleStatus, bodyReady: true, coreFlow: verifyCoreFlow, sidebarFlow })}\n`)
 } catch (error) {
   await page.screenshot({ path: screenshotPath, fullPage: true }).catch(() => undefined)
+  if (browserErrors.length > 0) process.stderr.write(`Browser errors:\n${browserErrors.join('\n')}\n`)
   throw error
 } finally {
   await browser.close()
@@ -128,7 +133,9 @@ async function dismissKnownOnboarding(page) {
   const buttonName = /^(继续|Continue|稍后配置|Configure later|Set up later)$/iu
   for (let count = 0; count < 4; count += 1) {
     const button = page.getByRole('button', { name: buttonName }).filter({ visible: true }).first()
-    if (await button.count() === 0) return
+    const appeared = await button.waitFor({ state: 'visible', timeout: count === 0 ? 3_000 : 1_000 })
+      .then(() => true, () => false)
+    if (!appeared) return
     await button.click()
   }
 }

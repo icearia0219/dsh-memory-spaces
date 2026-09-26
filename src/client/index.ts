@@ -8,6 +8,9 @@ import type {} from '@deepseek-ai/dsh-client-ui-workspace/client'
 import { memoryCommandInputDefinition } from './memory-command-input.ts'
 import { MemoryCommandInputView } from './MemoryCommandInputView.tsx'
 import { MemoryShareCommandView, MemorySpaceUiCommandView } from './MemoryShareCommandView.tsx'
+import {
+  ConversationEventRegistryBridge, type ConversationEventRegistryLike,
+} from './conversation-events.ts'
 import { MEMORY_SPACES_CLIENT_INJECT } from './dependencies.ts'
 import {
   MemoryInjectionPreview, MemoryShareHeaderButton, MemorySidebarSelectionTray,
@@ -35,7 +38,17 @@ export const inject = MEMORY_SPACES_CLIENT_INJECT
 export function apply(ctx: ClientContext): void {
   const controller = new MemoryShareController()
   const injected = (): MemoryShareInjected => ({ controller, remote: ctx.remote })
-  ctx.conversationEvents.register(memoryCommandInputDefinition)
+  const conversationEvents = new ConversationEventRegistryBridge(memoryCommandInputDefinition)
+  ctx.inject(['uiConversation'], (scope: ClientContext) => {
+    const service = scope.get('uiConversation') as {
+      readonly events: ConversationEventRegistryLike<typeof memoryCommandInputDefinition>
+    }
+    return conversationEvents.attach('uiConversation', service.events)
+  })
+  ctx.inject(['conversationEvents'], (scope: ClientContext) => {
+    const registry = scope.get('conversationEvents') as ConversationEventRegistryLike<typeof memoryCommandInputDefinition>
+    return conversationEvents.attach('conversationEvents', registry)
+  })
   ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'memory-spaces: client dictionaries')
   ctx.slots.inject('conversation.chat.node', () => ctx.slots.register({
     name: 'conversation.chat.node',

@@ -13,6 +13,7 @@ import type { Session, SurfaceEvent } from '@deepseek-ai/dsh-session'
 import { deriveEventMessage, isSurfaceEvent } from '@deepseek-ai/dsh-session/surface'
 import { HISTORY_SUMMARY_PREFIX, type MemoryStore } from './database.ts'
 import { retainUtf8Prefix } from './serialization.ts'
+import { readSessionEvent } from './session-events.ts'
 import type { HistorySummaryWriteResult, MemorySourceMessage } from './types.ts'
 
 const SUMMARY_SYSTEM = [
@@ -97,7 +98,7 @@ export function collectSessionHistory(
 ): SessionHistoryTranscript {
   const entries: TranscriptEntry[] = []
   for (const seq of session.surface.nodes) {
-    const event = session.events[seq]
+    const event = readSessionEvent(session, seq)
     if (event === undefined || !isSurfaceEvent(event)) {
       throw new Error(`memory-spaces: surface node ${seq} does not resolve to a surface event`)
     }
